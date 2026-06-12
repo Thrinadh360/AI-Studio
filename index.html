@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#00f2ff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <title>C-Sync Workstation Portal</title>
+    <!-- Live Biometric Face Authentication Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+    <script>
+      // Early suppression of expected development-only WebSocket / HMR failure overlays
+      (function() {
+        function shouldSilence(error) {
+          if (!error) return false;
+          var msg = "";
+          if (typeof error === "string") {
+            msg = error;
+          } else if (error.message) {
+            msg = error.message;
+          } else {
+            msg = String(error);
+          }
+          var lowMsg = msg.toLowerCase();
+          return (
+            lowMsg.indexOf("websocket") !== -1 ||
+            lowMsg.indexOf("closed without opened") !== -1 ||
+            lowMsg.indexOf("failed to connect") !== -1 ||
+            lowMsg.indexOf("connection reset") !== -1 ||
+            lowMsg.indexOf("hmr") !== -1
+          );
+        }
+
+        // Intercept log, warn and error methods to prevent them from hitting overlays
+        var originalError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var hasErrorToSilence = args.some(function(arg) {
+            return shouldSilence(arg);
+          });
+          if (hasErrorToSilence) return;
+          originalError.apply(console, arguments);
+        };
+
+        var originalWarn = console.warn;
+        console.warn = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var hasErrorToSilence = args.some(function(arg) {
+            return shouldSilence(arg);
+          });
+          if (hasErrorToSilence) return;
+          originalWarn.apply(console, arguments);
+        };
+
+        var originalLog = console.log;
+        console.log = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var hasErrorToSilence = args.some(function(arg) {
+            return shouldSilence(arg);
+          });
+          if (hasErrorToSilence) return;
+          originalLog.apply(console, arguments);
+        };
+
+        window.addEventListener("unhandledrejection", function(event) {
+          if (shouldSilence(event.reason)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+
+        window.addEventListener("error", function(event) {
+          if (shouldSilence(event.message) || shouldSilence(event.error)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

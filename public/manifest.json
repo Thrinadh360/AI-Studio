@@ -1,0 +1,18 @@
+{
+  "name": "C-Sync Companion App",
+  "short_name": "C-Sync",
+  "description": "Cryptographic Workstation Synchronization & Real-Time Security Node",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#010206",
+  "theme_color": "#00f2ff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

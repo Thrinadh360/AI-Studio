@@ -1,0 +1,400 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Space Grotesk", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --bg: #030512;
+  --accent: #00f2ff;
+  --surface: rgba(10, 15, 35, 0.72);
+  --border: rgba(0, 242, 255, 0.25);
+  --glass: rgba(10, 15, 35, 0.6);
+}
+
+/* Stunning Multicolored Cosmic Artwork Backdrop */
+body, html, #root {
+  background-color: #03040c !important;
+  background-image: 
+    radial-gradient(circle at 10% 15%, rgba(0, 242, 255, 0.16) 0%, transparent 48%),
+    radial-gradient(circle at 90% 10%, rgba(217, 70, 239, 0.16) 0%, transparent 48%),
+    radial-gradient(circle at 50% 85%, rgba(245, 158, 11, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.12) 0%, transparent 48%),
+    radial-gradient(circle at 20% 75%, rgba(220, 38, 38, 0.1) 0%, transparent 45%),
+    linear-gradient(135deg, #02040b 0%, #060818 50%, #03040e 100%) !important;
+  color: #f8fafc !important;
+  font-family: "Space Grotesk", "Outfit", sans-serif;
+  min-height: 100vh;
+}
+
+/* Prevent bleed-through / overlapping flickering on full-screen screens using secure explicit IDs */
+[id="sentry-hub-overlay"],
+[id="tg-direct-overlay"] {
+  background-color: #02040a !important;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(0, 242, 255, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(217, 70, 239, 0.14) 0%, transparent 45%),
+    linear-gradient(to bottom, #02040a 0%, #050818 100%) !important;
+  opacity: 1 !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+}
+
+/* Modals overlays styling specifically */
+.fixed.inset-0.bg-\[\#010309\] {
+  background: radial-gradient(circle at center, #06091e 0%, #010206 100%) !important;
+}
+.fixed.inset-0.bg-black\/80,
+.fixed.inset-0.bg-black\/65,
+.fixed.inset-0.backdrop-blur-md,
+.fixed.inset-0.backdrop-blur-sm,
+.fixed.inset-0.bg-slate-950\/85 {
+  background-color: rgba(2, 3, 10, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* Exquisite Translucent Neon-Framed Cyber Glass Overrides for Inline Cards only (NOT for Fixed/Absolute modals) */
+div[class*="bg-[#010206]"]:not(.fixed):not(.absolute),
+div[class*="bg-[#010309]"]:not(.fixed):not(.absolute),
+div[class*="bg-[#030612]"]:not(.fixed):not(.absolute),
+div[class*="bg-slate-950"]:not(.fixed):not(.absolute),
+div[class*="bg-slate-900"]:not(.fixed):not(.absolute),
+div[class*="bg-zinc-950"]:not(.fixed):not(.absolute),
+div[class*="bg-zinc-900"]:not(.fixed):not(.absolute),
+div[class*="bg-black"]:not(.fixed):not(.absolute),
+div[class*="bg-[#050714]"]:not(.fixed):not(.absolute),
+div[class*="bg-[#090d20]"]:not(.fixed):not(.absolute),
+div[class*="bg-[#02040c]"]:not(.fixed):not(.absolute),
+div[class*="bg-[#020202]"]:not(.fixed):not(.absolute),
+section[class*="bg-slate-950"]:not(.fixed):not(.absolute),
+section[class*="bg-[#010206]"]:not(.fixed):not(.absolute) {
+  background-color: rgba(6, 10, 26, 0.76) !important;
+  background-image: none !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(0, 242, 255, 0.22) !important;
+  color: #f8fafc !important;
+  box-shadow: 
+    0 12px 40px -12px rgba(0, 0, 0, 0.65), 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+    0 0 20px rgba(0, 242, 255, 0.03) !important;
+}
+
+/* Highlight specific widgets with unique artistic glow shadows */
+div[class*="bg-slate-950/70"]:not(.fixed):not(.absolute),
+div[class*="bg-slate-900/80"]:not(.fixed):not(.absolute),
+div[class*="bg-black/60"]:not(.fixed):not(.absolute),
+div[class*="bg-black/85"]:not(.fixed):not(.absolute),
+div[class*="bg-black/45"]:not(.fixed):not(.absolute),
+div[class*="bg-slate-950/40"]:not(.fixed):not(.absolute),
+div[class*="bg-slate-900/40"]:not(.fixed):not(.absolute),
+div[class*="bg-[#01030e]"]:not(.fixed):not(.absolute),
+div[class*="bg-[#01030d]"]:not(.fixed):not(.absolute) {
+  background: rgba(10, 16, 38, 0.65) !important;
+  border-color: rgba(244, 63, 94, 0.22) !important; /* Touch of modern fuchsia */
+  color: #f1f5f9 !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Interactive custom styled Cyber grid outlines for extreme tech artwork vibes */
+.csync-cyber-grid {
+  background-size: 24px 24px !important;
+  background-image: 
+    linear-gradient(rgba(0, 242, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 242, 255, 0.04) 1px, transparent 1px) !important;
+}
+.csync-cyber-grid-rose {
+  background-size: 24px 24px !important;
+  background-image: 
+    linear-gradient(rgba(244, 63, 94, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(244, 63, 94, 0.04) 1px, transparent 1px) !important;
+}
+
+/* Text Overrides - Clean white contrast with beautiful high-tech neon details */
+span[class*="text-slate-100"],
+span[class*="text-white"],
+span[class*="text-slate-200"],
+span[class*="text-slate-300"],
+h1[class*="text-white"],
+h1[class*="text-slate-100"],
+h2[class*="text-white"],
+h2[class*="text-slate-100"],
+h3[class*="text-white"],
+h3[class*="text-slate-100"],
+h4[class*="text-white"],
+h4[class*="text-slate-100"],
+p[class*="text-slate-100"],
+p[class*="text-slate-200"],
+div[class*="text-slate-150"],
+div[class*="text-slate-200"],
+button[class*="text-white"] {
+  color: #fafafa !important;
+}
+
+span[class*="text-slate-400"],
+span[class*="text-slate-350"],
+span[class*="text-zinc-400"],
+span[class*="text-zinc-350"],
+p[class*="text-slate-400"],
+p[class*="text-zinc-400"],
+div[class*="text-slate-400"],
+div[class*="text-zinc-400"] {
+  color: #94a3b8 !important;
+}
+
+/* Premium gradient titles and glowing multi-colors */
+.text-\[\#00f2ff\],
+.text-cyan-400,
+.text-cyan-300,
+span[class*="text-[#00f2ff]"],
+h1[class*="text-[#00f2ff]"] {
+  color: #00f2ff !important;
+  text-shadow: 0 0 10px rgba(0, 242, 255, 0.45) !important;
+}
+
+.text-pink-400,
+.text-pink-500,
+span[class*="text-pink-400"] {
+  color: #ff007f !important;
+  text-shadow: 0 0 10px rgba(255, 0, 127, 0.45) !important;
+}
+
+.text-amber-400,
+span[class*="text-amber-400"] {
+  color: #fbbf24 !important;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.35) !important;
+}
+
+.text-emerald-400,
+span[class*="text-emerald-400"] {
+  color: #10b981 !important;
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Beautiful custom badges overrides */
+span[class*="bg-emerald-950/40"],
+span[class*="bg-[#311]/40"],
+div[class*="bg-[#082f49]"] {
+  background-color: rgba(0, 242, 255, 0.12) !important;
+  border: 1px solid rgba(0, 242, 255, 0.25) !important;
+  color: #00f2ff !important;
+  text-shadow: 0 0 6px rgba(0, 242, 255, 0.2) !important;
+}
+
+/* Brand Vector Graphics Background fixes */
+rect[fill="#ffffff"] {
+  fill: #030512 !important;
+}
+rect[fill="#02040e"] {
+  fill: #010206 !important;
+}
+radialGradient[id="hexFillGrad"] stop[stopColor="#f8fafc"] {
+  stop-color: #030512 !important;
+}
+
+/* Beautiful inputs matching the cosmic panel layouts directly */
+input, select, textarea {
+  background-color: rgba(6, 12, 32, 0.85) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(0, 242, 255, 0.24) !important;
+  box-shadow: 0 0 12px rgba(0, 242, 255, 0.03) !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #00f2ff !important;
+  box-shadow: 0 0 14px rgba(0, 242, 255, 0.2) !important;
+  outline: none;
+}
+input::placeholder, textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Buttons overriding to avoid white text on light buttons */
+button.bg-slate-900,
+button[class*="bg-slate-900"] {
+  background-color: rgba(14, 165, 233, 0.15) !important;
+  border: 1px solid rgba(14, 165, 233, 0.3) !important;
+  color: #ffffff !important;
+}
+button.bg-slate-900:hover,
+button[class*="bg-slate-900"]:hover {
+  background-color: rgba(14, 165, 233, 0.25) !important;
+  border-color: #00f2ff !important;
+}
+
+/* Custom styled glowing interactive micro panels */
+.glass-panel {
+  background: rgba(10, 16, 38, 0.68) !important;
+  border: 1px solid rgba(0, 242, 255, 0.2) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+.glass-panel-vibrant {
+  background: rgba(10, 16, 38, 0.72) !important;
+  border: 1px solid rgba(217, 70, 239, 0.25) !important;
+  box-shadow: 0 8px 32px 0 rgba(217, 70, 239, 0.08) !important;
+}
+
+.glass-panel-cyan {
+  background: rgba(0, 242, 255, 0.05) !important;
+  border: 1px solid rgba(0, 242, 255, 0.22) !important;
+  box-shadow: 0 0 12px rgba(0, 242, 255, 0.04) !important;
+}
+
+.glass-panel-rose {
+  background: rgba(244, 63, 94, 0.05) !important;
+  border: 1px solid rgba(244, 63, 94, 0.22) !important;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.04) !important;
+}
+
+.glass-panel-amber {
+  background: rgba(245, 158, 11, 0.05) !important;
+  border: 1px solid rgba(245, 158, 11, 0.22) !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.04) !important;
+}
+
+/* Fallbacks & other status styles */
+.progress-bar-pro {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+.progress-fill-pro {
+  background: linear-gradient(90deg, #00f2ff, #f43f5e) !important;
+}
+
+.node-available {
+  border: 1px solid rgba(16, 185, 129, 0.45) !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+  color: #10b981 !important;
+}
+.node-occupied {
+  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+  color: #ef4444 !important;
+}
+.node-syncing {
+  border: 1px solid rgba(14, 165, 233, 0.55) !important;
+  background: rgba(14, 165, 233, 0.08) !important;
+  color: #0ea5e9 !important;
+}
+
+/* End Call and Dial keys retain extreme visibility */
+button.bg-red-600,
+button[class*="bg-red-600"],
+button[class*="bg-rose-600"],
+button.bg-rose-650 {
+  background-color: #dc2626 !important;
+  border-color: #f87171 !important;
+  color: #ffffff !important;
+}
+
+button.bg-emerald-600,
+button[class*="bg-emerald-600"] {
+  background-color: #059669 !important;
+  border-color: #34d399 !important;
+  color: #ffffff !important;
+}
+
+.font-orbitron {
+  font-family: 'Orbitron', 'Space Grotesk', sans-serif !important;
+  letter-spacing: 0.12em;
+}
+
+/* Custom layout scan animation */
+@keyframes scan {
+  0% { transform: translateY(0); opacity: 0.15; }
+  50% { transform: translateY(140px); opacity: 0.85; }
+  100% { transform: translateY(0); opacity: 0.15; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pureFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-scan {
+  animation: scan 3.5s infinite linear;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-pureFadeIn {
+  animation: pureFadeIn 0.25s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 242, 255, 0.15);
+  pointer-events: none;
+}
+
+/* Transparent-scrolling scroll bar styling for dynamic hub panels */
+* {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+*::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+}
+
+/* Neon glow border details */
+.vibrant-border-cyan {
+  border: 1px solid rgba(0, 242, 255, 0.45);
+  box-shadow: 0 0 15px rgba(0, 242, 255, 0.15);
+}
+.vibrant-border-rose {
+  border: 1px solid rgba(244, 63, 94, 0.45);
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.15);
+}
+.vibrant-border-amber {
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+}
+.vibrant-border-emerald {
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+}
+.vibrant-border-fuchsia {
+  border: 1px solid rgba(217, 70, 239, 0.45);
+  box-shadow: 0 0 15px rgba(217, 70, 239, 0.15);
+}
+
+/* Color spectrum halo shifting border glows */
+@keyframes spectrum-glow {
+  0% { border-color: rgba(0, 242, 255, 0.5); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+  25% { border-color: rgba(217, 70, 239, 0.5); box-shadow: 0 0 20px rgba(217, 70, 239, 0.2); }
+  50% { border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
+  75% { border-color: rgba(16, 185, 129, 0.5); box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+  100% { border-color: rgba(0, 242, 255, 0.5); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+}
+
+.spectrum-halo-border {
+  animation: spectrum-glow 8s infinite linear;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

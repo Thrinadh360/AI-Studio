@@ -1,0 +1,10 @@
+{
+  "name": "Syska AI",
+  "description": "Professional-grade Real-time File Synchronization, Workstation Maintenance Logs, and Student Profile Photo Dashboard with Hey Syska 2-way Voice Command AI.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
