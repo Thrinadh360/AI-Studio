@@ -13,6 +13,8 @@ import { playHaptic, playVoice } from './feedback';
 import { Layers, Smartphone, Tv, Cpu, Shield, Sparkles, Download, Check, AlertCircle, QrCode, Camera, LogOut, Play, Linkedin } from 'lucide-react';
 import { safeStorage } from './utils/safeStorage';
 
+const localStorage = safeStorage;
+
 export default function App() {
   // Master client database simulation instance
   const [db] = useState(() => new ClientDatabase(

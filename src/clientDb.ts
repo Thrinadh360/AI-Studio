@@ -48,6 +48,9 @@ export class ClientDatabase {
   private motherUpi: string = '8500394696@yes';
   private gatewayAutoApprove: boolean = true;
   private deployedModules: { id: string; name: string; desc: string; icon: string; deployed: boolean }[] = [];
+  private lastWriteTime: number = 0;
+  private writeInProgress: boolean = false;
+  private lastKnownState: { [key: string]: any } = {};
   private morningBrief: MorningBrief = {
     id: 'brief-today',
     date: '2026-05-31',
@@ -382,28 +385,9 @@ export class ClientDatabase {
         { id: 'hostel', name: 'Hostel Occupancy Index', desc: 'Secure register and access bounds indexer', icon: 'Home', deployed: true }
       ];
     }
-    const savedUsers = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_users_v4') : null;
-    let loadedUsers: User[] = [];
-    if (savedUsers) {
-      try {
-        loadedUsers = JSON.parse(savedUsers);
-      } catch (_) {
-        loadedUsers = [];
-      }
-    }
-
-    // Filter out all dummy accounts ('Demo Student', 'GDC Student', etc.) to provide a clean fresh ecosystem
-    const cleanUsers = loadedUsers.filter(u => 
-      u.email?.toLowerCase() === 'marukondathrinadh@gmail.com' ||
-      u.mobileNumber === '8500394696' ||
-      u.id === 1 ||
-      (u.fullName && (u.fullName.toLowerCase().includes('thrinadh') || u.fullName.toLowerCase().includes('marukonda')))
-    );
-
-    // If the principal admin/developer is not in the list, seed him as the anchor
-    const hasAdmin = cleanUsers.some(u => u.email?.toLowerCase() === 'marukondathrinadh@gmail.com' || u.id === 1);
-    if (!hasAdmin) {
-      cleanUsers.push({
+    // Universal MySQL as source of truth - do not load users from localStorage
+    const cleanUsers: User[] = [
+      {
         id: 1,
         fullName: 'Thrinadh Marukonda',
         idNumber: 'CS-25603',
@@ -429,8 +413,8 @@ export class ClientDatabase {
         photoBlob: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop',
         badges: ['Terminal Overlord', 'Perfect Ledger'],
         stars: { attendance: 5, punctuality: 4, consistency: 5, dedication: 5, resilience: 4, honor: 5 }
-      });
-    }
+      }
+    ];
 
     this.users = cleanUsers;
     this.persistStateOnlyLocal();
@@ -451,21 +435,9 @@ export class ClientDatabase {
       };
     });
 
-    const savedTxs = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_transactions_v4') : null;
-    if (savedTxs) {
-      try {
-        this.bankTransactions = JSON.parse(savedTxs);
-      } catch (_) {
-        this.bankTransactions = [];
-      }
-    } else {
-      this.bankTransactions = [];
-    }
-
-    const savedStations = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_stations_v4') : null;
-    if (savedStations) {
-      try { this.stations = JSON.parse(savedStations); } catch (_) { this.stations = [...stations]; }
-    } else { this.stations = [...stations]; }
+    // Universal MySQL database is source of truth - do not load from localStorage
+    this.bankTransactions = [];
+    this.stations = [...stations];
 
     // Ensure MAC address is set to 'Pending First Run' unless it has been run active on this PC
     const hostActiveStation = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_physical_station_id') : null;
@@ -482,46 +454,15 @@ export class ClientDatabase {
       return st;
     });
 
-    const savedFiles = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_files_v4') : null;
-    if (savedFiles) {
-      try { this.files = JSON.parse(savedFiles); } catch (_) { this.files = [...files]; }
-    } else { this.files = [...files]; }
+    this.files = [...files];
+    this.systemLogs = [...logs];
+    this.attendanceLogs = [...attendance];
+    this.issues = [...issues];
+    this.maintenance = [...maintenance];
+    this.deviceChangeRequests = [];
+    this.leaveRequests = [];
 
-    const savedSystemLogs = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_system_logs_v4') : null;
-    if (savedSystemLogs) {
-      try { this.systemLogs = JSON.parse(savedSystemLogs); } catch (_) { this.systemLogs = [...logs]; }
-    } else { this.systemLogs = [...logs]; }
-
-    const savedAttendanceLogs = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_attendance_logs_v4') : null;
-    if (savedAttendanceLogs) {
-      try { this.attendanceLogs = JSON.parse(savedAttendanceLogs); } catch (_) { this.attendanceLogs = [...attendance]; }
-    } else { this.attendanceLogs = [...attendance]; }
-
-    const savedIssues = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_issues_v4') : null;
-    if (savedIssues) {
-      try { this.issues = JSON.parse(savedIssues); } catch (_) { this.issues = [...issues]; }
-    } else { this.issues = [...issues]; }
-
-    const savedMaintenance = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_maintenance_v4') : null;
-    if (savedMaintenance) {
-      try { this.maintenance = JSON.parse(savedMaintenance); } catch (_) { this.maintenance = [...maintenance]; }
-    } else { this.maintenance = [...maintenance]; }
-
-    const savedDeviceRequests = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_device_change_requests_v4') : null;
-    if (savedDeviceRequests) {
-      try { this.deviceChangeRequests = JSON.parse(savedDeviceRequests); } catch (_) { this.deviceChangeRequests = []; }
-    } else { this.deviceChangeRequests = []; }
-
-    const savedLeaveReqs = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_leave_requests_v4') : null;
-    if (savedLeaveReqs) {
-      try { this.leaveRequests = JSON.parse(savedLeaveReqs); } catch (_) { this.leaveRequests = []; }
-    } else { this.leaveRequests = []; }
-
-    const savedJobs = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_jobs_v4') : null;
-    if (savedJobs) {
-      try { this.jobOpportunities = JSON.parse(savedJobs); } catch (_) { this.jobOpportunities = []; }
-    } else {
-      this.jobOpportunities = [
+    this.jobOpportunities = [
         {
           id: 'job-01',
           title: 'Full Stack React Engineer',
@@ -592,35 +533,11 @@ export class ClientDatabase {
           applicantsCount: 2
         }
       ];
-    }
 
-    const savedJobApps = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_job_applications_v4') : null;
-    if (savedJobApps) {
-      try { this.jobApplications = JSON.parse(savedJobApps); } catch (_) { this.jobApplications = []; }
-    } else {
-      this.jobApplications = [];
-    }
-
-    const savedClosureReqs = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_closure_requests_v4') : null;
-    if (savedClosureReqs) {
-      try { this.accountClosureRequests = JSON.parse(savedClosureReqs); } catch (_) { this.accountClosureRequests = []; }
-    } else {
-      this.accountClosureRequests = [];
-    }
-
-    const savedFundraisers = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_fundraisers_v4') : null;
-    if (savedFundraisers) {
-      try { this.fundraiserCampaigns = JSON.parse(savedFundraisers); } catch (_) { this.fundraiserCampaigns = []; }
-    } else {
-      this.fundraiserCampaigns = [];
-    }
-
-    const savedFundraiserContr = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_fundraiser_contributions_v4') : null;
-    if (savedFundraiserContr) {
-      try { this.fundraiserContributions = JSON.parse(savedFundraiserContr); } catch (_) { this.fundraiserContributions = []; }
-    } else {
-      this.fundraiserContributions = [];
-    }
+    this.jobApplications = [];
+    this.accountClosureRequests = [];
+    this.fundraiserCampaigns = [];
+    this.fundraiserContributions = [];
 
     const savedActiveUser = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_active_user_v4') : null;
     if (savedActiveUser) {
@@ -1031,26 +948,7 @@ export class ClientDatabase {
       }
     ];
 
-    // Restore saved chatThreads and chatMessages if they exist
-    const savedChatThreads = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_chat_threads_v4') : null;
-    if (savedChatThreads) {
-      try {
-        const parsedThreads = JSON.parse(savedChatThreads);
-        if (Array.isArray(parsedThreads) && parsedThreads.length > 0) {
-          this.chatThreads = parsedThreads;
-        }
-      } catch (_) {}
-    }
-
-    const savedChatMessages = typeof localStorage !== 'undefined' ? localStorage.getItem('csync_saved_chat_messages_v4') : null;
-    if (savedChatMessages) {
-      try {
-        const parsedMessages = JSON.parse(savedChatMessages);
-        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
-          this.chatMessages = parsedMessages;
-        }
-      } catch (_) {}
-    }
+    // Universal MySQL database is source of truth - do not load chat from localStorage
 
     // Start background avatar update sweeps for all loaded Telegram threads
     this.chatThreads.forEach(t => {
@@ -1059,6 +957,7 @@ export class ClientDatabase {
         this.fetchTelegramAvatarAsynchronously(t.id, contactVal);
       }
     });
+    this.updateLastKnownState();
   }
 
   getLeaveRequests(): LeaveRequest[] {
@@ -1798,21 +1697,45 @@ export class ClientDatabase {
     return false;
   }
 
+  updateLastKnownState() {
+    this.lastKnownState = {
+      users: JSON.parse(JSON.stringify(this.users || [])),
+      stations: JSON.parse(JSON.stringify(this.stations || [])),
+      files: JSON.parse(JSON.stringify(this.files || [])),
+      systemLogs: JSON.parse(JSON.stringify(this.systemLogs || [])),
+      attendanceLogs: JSON.parse(JSON.stringify(this.attendanceLogs || [])),
+      issues: JSON.parse(JSON.stringify(this.issues || [])),
+      maintenance: JSON.parse(JSON.stringify(this.maintenance || [])),
+      deviceChangeRequests: JSON.parse(JSON.stringify(this.deviceChangeRequests || [])),
+      leaveRequests: JSON.parse(JSON.stringify(this.leaveRequests || [])),
+      jobOpportunities: JSON.parse(JSON.stringify(this.jobOpportunities || [])),
+      jobApplications: JSON.parse(JSON.stringify(this.jobApplications || [])),
+      chatThreads: JSON.parse(JSON.stringify(this.chatThreads || [])),
+      chatMessages: JSON.parse(JSON.stringify(this.chatMessages || [])),
+      bankTransactions: JSON.parse(JSON.stringify(this.bankTransactions || [])),
+      accountClosureRequests: JSON.parse(JSON.stringify(this.accountClosureRequests || [])),
+      fundraiserCampaigns: JSON.parse(JSON.stringify(this.fundraiserCampaigns || [])),
+      fundraiserContributions: JSON.parse(JSON.stringify(this.fundraiserContributions || [])),
+      motherUpi: this.motherUpi,
+      gatewayAutoApprove: this.gatewayAutoApprove,
+      deployedModules: JSON.parse(JSON.stringify(this.deployedModules || []))
+    };
+  }
+
   async syncWithServer() {
+    if (this.writeInProgress) {
+      return;
+    }
     try {
       const response = await fetch('/api/ecosystem-state');
       if (response.ok) {
+        if (this.writeInProgress) {
+          return;
+        }
         const state = await response.json();
         if (state && typeof state === 'object') {
           if (state.users && Array.isArray(state.users)) {
-            // Remove dummy mock users
-            this.users = state.users.filter((u: any) => 
-              u.email?.toLowerCase() === 'marukondathrinadh@gmail.com' ||
-              u.mobileNumber === '8500394696' ||
-              u.id === 1 ||
-              (u.fullName && (u.fullName.toLowerCase().includes('thrinadh') || u.fullName.toLowerCase().includes('marukonda'))) ||
-              !u.isApproved // keep newly-registered pending approval users!
-            );
+            this.users = state.users;
             
             // Ensure Thrinadh is always present
             const hasAdmin = this.users.some((u: any) => u.email?.toLowerCase() === 'marukondathrinadh@gmail.com' || u.id === 1);
@@ -1866,6 +1789,7 @@ export class ClientDatabase {
           if (state.gatewayAutoApprove !== undefined) this.gatewayAutoApprove = state.gatewayAutoApprove;
           if (state.deployedModules) this.deployedModules = state.deployedModules;
           
+          this.updateLastKnownState();
           this.persistStateOnlyLocal();
         }
       }
@@ -1877,144 +1801,152 @@ export class ClientDatabase {
   persistStateOnlyLocal() {
     if (typeof localStorage === 'undefined') return;
     try {
-      localStorage.setItem('csync_saved_users_v4', JSON.stringify(this.users));
-      localStorage.setItem('csync_saved_stations_v4', JSON.stringify(this.stations));
-      localStorage.setItem('csync_saved_files_v4', JSON.stringify(this.files));
-      localStorage.setItem('csync_saved_system_logs_v4', JSON.stringify(this.systemLogs));
-      localStorage.setItem('csync_saved_attendance_logs_v4', JSON.stringify(this.attendanceLogs));
-      localStorage.setItem('csync_saved_issues_v4', JSON.stringify(this.issues));
-      localStorage.setItem('csync_saved_maintenance_v4', JSON.stringify(this.maintenance));
-      localStorage.setItem('csync_saved_device_change_requests_v4', JSON.stringify(this.deviceChangeRequests));
-      localStorage.setItem('csync_saved_leave_requests_v4', JSON.stringify(this.leaveRequests));
-      localStorage.setItem('csync_saved_jobs_v4', JSON.stringify(this.jobOpportunities));
-      localStorage.setItem('csync_saved_job_applications_v4', JSON.stringify(this.jobApplications));
       localStorage.setItem('csync_saved_active_user_v4', this.currentStudentUser ? JSON.stringify(this.currentStudentUser) : '');
-      localStorage.setItem('csync_saved_chat_threads_v4', JSON.stringify(this.chatThreads));
-      localStorage.setItem('csync_saved_chat_messages_v4', JSON.stringify(this.chatMessages));
-      localStorage.setItem('csync_saved_transactions_v4', JSON.stringify(this.bankTransactions));
-      localStorage.setItem('csync_saved_closure_requests_v4', JSON.stringify(this.accountClosureRequests));
-      localStorage.setItem('csync_saved_fundraisers_v4', JSON.stringify(this.fundraiserCampaigns));
-      localStorage.setItem('csync_saved_fundraiser_contributions_v4', JSON.stringify(this.fundraiserContributions));
-      localStorage.setItem('csync_saved_mother_upi', this.motherUpi);
-      localStorage.setItem('csync_saved_gateway_auto_approve', String(this.gatewayAutoApprove));
-      localStorage.setItem('csync_saved_deployed_modules', JSON.stringify(this.deployedModules));
     } catch (_) {}
   }
 
-  persistState() {
+  async persistState() {
+    this.lastWriteTime = Date.now();
     this.persistStateOnlyLocal();
+
+    const arrayKeys: { [key: string]: string } = {
+      users: 'id',
+      stations: 'stationId',
+      files: 'id',
+      systemLogs: 'id',
+      attendanceLogs: 'id',
+      issues: 'id',
+      maintenance: 'id',
+      deviceChangeRequests: 'id',
+      leaveRequests: 'id',
+      jobOpportunities: 'id',
+      jobApplications: 'id',
+      chatThreads: 'id',
+      chatMessages: 'id',
+      bankTransactions: 'id',
+      accountClosureRequests: 'id',
+      fundraiserCampaigns: 'id',
+      fundraiserContributions: 'id',
+      deployedModules: 'id'
+    };
+
+    const dirtyKeys: string[] = [];
+    
+    for (const key of Object.keys(arrayKeys)) {
+      const localVal = (this as any)[key] || [];
+      const knownVal = this.lastKnownState[key] || [];
+      if (JSON.stringify(localVal) !== JSON.stringify(knownVal)) {
+        dirtyKeys.push(key);
+      }
+    }
+
+    if (this.motherUpi !== this.lastKnownState.motherUpi) {
+      dirtyKeys.push('motherUpi');
+    }
+    if (this.gatewayAutoApprove !== this.lastKnownState.gatewayAutoApprove) {
+      dirtyKeys.push('gatewayAutoApprove');
+    }
+
+    if (dirtyKeys.length === 0) {
+      return;
+    }
+
+    this.writeInProgress = true;
+
     try {
-      const payload = {
-        users: this.users,
-        stations: this.stations,
-        files: this.files,
-        systemLogs: this.systemLogs,
-        attendanceLogs: this.attendanceLogs,
-        issues: this.issues,
-        maintenance: this.maintenance,
-        deviceChangeRequests: this.deviceChangeRequests,
-        leaveRequests: this.leaveRequests,
-        jobOpportunities: this.jobOpportunities,
-        jobApplications: this.jobApplications,
-        chatThreads: this.chatThreads,
-        chatMessages: this.chatMessages,
-        bankTransactions: this.bankTransactions,
-        accountClosureRequests: this.accountClosureRequests,
-        fundraiserCampaigns: this.fundraiserCampaigns,
-        fundraiserContributions: this.fundraiserContributions,
-        motherUpi: this.motherUpi,
-        gatewayAutoApprove: this.gatewayAutoApprove,
-        deployedModules: this.deployedModules
-      };
-      
-      fetch('/api/ecosystem-state', {
+      const response = await fetch('/api/ecosystem-state');
+      if (!response.ok) {
+        throw new Error(`Server returned status ${response.status}`);
+      }
+      const serverState = await response.json();
+      if (!serverState || typeof serverState !== 'object') {
+        throw new Error('Invalid server state response');
+      }
+
+      const payload: { [key: string]: any } = {};
+
+      for (const key of dirtyKeys) {
+        if (arrayKeys[key]) {
+          const idKey = arrayKeys[key];
+          const localArr = (this as any)[key] || [];
+          const lastKnownArr = this.lastKnownState[key] || [];
+          const serverArr = serverState[key] || [];
+
+          const localMap = new Map(localArr.map((item: any) => [item[idKey], item]));
+          const lastKnownMap = new Map(lastKnownArr.map((item: any) => [item[idKey], item]));
+
+          const additions: any[] = [];
+          const updates = new Map<any, any>();
+          for (const item of localArr) {
+            const id = item[idKey];
+            if (!lastKnownMap.has(id)) {
+              additions.push(item);
+            } else {
+              const lastItem = lastKnownMap.get(id);
+              if (JSON.stringify(item) !== JSON.stringify(lastItem)) {
+                updates.set(id, item);
+              }
+            }
+          }
+
+          const deletions = new Set<any>();
+          for (const item of lastKnownArr) {
+            const id = item[idKey];
+            if (!localMap.has(id)) {
+              deletions.add(id);
+            }
+          }
+
+          const mergedArr: any[] = [];
+          for (const item of serverArr) {
+            const id = item[idKey];
+            if (deletions.has(id)) {
+              continue;
+            }
+            if (updates.has(id)) {
+              mergedArr.push({ ...item, ...updates.get(id) });
+            } else {
+              mergedArr.push(item);
+            }
+          }
+
+          const existingIds = new Set(mergedArr.map((item: any) => item[idKey]));
+          for (const item of additions) {
+            if (!existingIds.has(item[idKey])) {
+              mergedArr.push(item);
+            }
+          }
+
+          payload[key] = mergedArr;
+          (this as any)[key] = mergedArr;
+        } else {
+          payload[key] = (this as any)[key];
+        }
+      }
+
+      const postResponse = await fetch('/api/ecosystem-state', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
-      }).catch(err => {
-        console.warn("CSync background state push failed:", err);
       });
+
+      if (postResponse.ok) {
+        this.updateLastKnownState();
+      }
     } catch (err) {
-      console.warn("CSync background state push offline:", err);
+      console.warn("CSync background state push failed/offline:", err);
+    } finally {
+      this.writeInProgress = false;
     }
   }
 
   reloadFromLocalStorage() {
     if (typeof localStorage === 'undefined') return;
     try {
-      const savedUsers = localStorage.getItem('csync_saved_users_v4');
-      if (savedUsers) {
-        const parsed = JSON.parse(savedUsers);
-        this.users = parsed.filter((u: any) => 
-          u.email?.toLowerCase() === 'marukondathrinadh@gmail.com' ||
-          u.mobileNumber === '8500394696' ||
-          u.id === 1 ||
-          (u.fullName && (u.fullName.toLowerCase().includes('thrinadh') || u.fullName.toLowerCase().includes('marukonda'))) ||
-          !u.isApproved // keep newly-registered pending approval users!
-        );
-      }
-
-      const savedStations = localStorage.getItem('csync_saved_stations_v4');
-      if (savedStations) this.stations = JSON.parse(savedStations);
-
-      const savedFiles = localStorage.getItem('csync_saved_files_v4');
-      if (savedFiles) this.files = JSON.parse(savedFiles);
-
-      const savedLogs = localStorage.getItem('csync_saved_system_logs_v4');
-      if (savedLogs) this.systemLogs = JSON.parse(savedLogs);
-
-      const savedAttendance = localStorage.getItem('csync_saved_attendance_logs_v4');
-      if (savedAttendance) this.attendanceLogs = JSON.parse(savedAttendance);
-
-      const savedIssues = localStorage.getItem('csync_saved_issues_v4');
-      if (savedIssues) this.issues = JSON.parse(savedIssues);
-
-      const savedMaint = localStorage.getItem('csync_saved_maintenance_v4');
-      if (savedMaint) this.maintenance = JSON.parse(savedMaint);
-
-      const savedDcr = localStorage.getItem('csync_saved_device_change_requests_v4');
-      if (savedDcr) this.deviceChangeRequests = JSON.parse(savedDcr);
-
-      const savedLeave = localStorage.getItem('csync_saved_leave_requests_v4');
-      if (savedLeave) this.leaveRequests = JSON.parse(savedLeave);
-
-      const savedJobs = localStorage.getItem('csync_saved_jobs_v4');
-      if (savedJobs) this.jobOpportunities = JSON.parse(savedJobs);
-
-      const savedApplications = localStorage.getItem('csync_saved_job_applications_v4');
-      if (savedApplications) this.jobApplications = JSON.parse(savedApplications);
-
       const savedActiveUser = localStorage.getItem('csync_saved_active_user_v4');
       if (savedActiveUser) this.currentStudentUser = JSON.parse(savedActiveUser);
-
-      const savedThreads = localStorage.getItem('csync_saved_chat_threads_v4');
-      if (savedThreads) this.chatThreads = JSON.parse(savedThreads);
-
-      const savedMsgs = localStorage.getItem('csync_saved_chat_messages_v4');
-      if (savedMsgs) this.chatMessages = JSON.parse(savedMsgs);
-
-      const savedTx = localStorage.getItem('csync_saved_transactions_v4');
-      if (savedTx) this.bankTransactions = JSON.parse(savedTx);
-
-      const savedClosure = localStorage.getItem('csync_saved_closure_requests_v4');
-      if (savedClosure) this.accountClosureRequests = JSON.parse(savedClosure);
-
-      const savedFundraisers = localStorage.getItem('csync_saved_fundraisers_v4');
-      if (savedFundraisers) this.fundraiserCampaigns = JSON.parse(savedFundraisers);
-
-      const savedContributions = localStorage.getItem('csync_saved_fundraiser_contributions_v4');
-      if (savedContributions) this.fundraiserContributions = JSON.parse(savedContributions);
-
-      const savedMother = localStorage.getItem('csync_saved_mother_upi');
-      if (savedMother && savedMother.trim()) this.motherUpi = savedMother.trim();
-
-      const savedAuto = localStorage.getItem('csync_saved_gateway_auto_approve');
-      if (savedAuto !== null) this.gatewayAutoApprove = savedAuto === 'true';
-
-      const savedModules = localStorage.getItem('csync_saved_deployed_modules');
-      if (savedModules) this.deployedModules = JSON.parse(savedModules);
     } catch (err) {
-      console.warn("Telemetry database reload failed gracefully in sandbox:", err);
+      console.warn("Telemetry database active user reload failed gracefully:", err);
     }
   }
 
@@ -2453,6 +2385,12 @@ export class ClientDatabase {
   }
 
   getCurrentStudent(): User | null {
+    if (this.currentStudentUser) {
+      const liveUser = this.users.find(u => u.id === this.currentStudentUser?.id);
+      if (liveUser) {
+        this.currentStudentUser = liveUser;
+      }
+    }
     return this.currentStudentUser;
   }
 

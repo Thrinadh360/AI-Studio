@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import { ClientDatabase } from '../clientDb';
 import { User, CampusHoliday, PanicAlert, Station } from '../types';
+import { safeStorage } from '../utils/safeStorage';
+
+const localStorage = safeStorage;
 
 interface DevDeckCtrlProps {
   db: ClientDatabase;
@@ -269,7 +272,7 @@ export const DevDeckCtrl: React.FC<DevDeckCtrlProps> = ({
   const [isSeedingPg, setIsSeedingPg] = useState<boolean>(false);
 
   // PHP MySQL Connection states
-  const [phpDbHost, setPhpDbHost] = useState<string>(() => localStorage.getItem('csync_php_db_host') || 'localhost');
+  const [phpDbHost, setPhpDbHost] = useState<string>(() => localStorage.getItem('csync_php_db_host') || '37.27.71.198');
   const [phpDbPort, setPhpDbPort] = useState<string>(() => localStorage.getItem('csync_php_db_port') || '3306');
   const [phpDbName, setPhpDbName] = useState<string>(() => localStorage.getItem('csync_php_db_name') || 'vfnzeaml_CSync');
   const [phpDbUser, setPhpDbUser] = useState<string>(() => localStorage.getItem('csync_php_db_user') || 'vfnzeaml_CSync');

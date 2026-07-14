@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import { ClientDatabase } from '../clientDb';
 import { User, WeatherInfo, MorningBrief } from '../types';
+import { safeStorage } from '../utils/safeStorage';
+
+const localStorage = safeStorage;
 import { playVoice, playHaptic } from '../feedback';
 import { CsyncGestureController } from './CsyncGestureController';
 import { BiometricHapticSandbox } from './BiometricHapticSandbox';

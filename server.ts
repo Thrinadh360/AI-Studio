@@ -15,24 +15,11 @@ const PORT = process.env.PORT || 3000;
 const poolsCache = new Map<string, mysql.Pool>();
 
 function getMysqlPool(req?: express.Request): mysql.Pool {
-  let host = process.env.MYSQL_HOST || 'localhost';
-  let port = parseInt(process.env.MYSQL_PORT || '3306');
-  let database = process.env.MYSQL_DB || 'vfnzeaml_CSync';
-  let user = process.env.MYSQL_USER || 'vfnzeaml_CSync';
-  let password = process.env.MYSQL_PASS || 'vfnzeaml_CSync';
-
-  // Overwrite with dynamic client config from request headers if available
-  if (req && req.headers) {
-    if (req.headers['x-mysql-host']) host = String(req.headers['x-mysql-host']);
-    if (req.headers['x-mysql-port']) port = parseInt(String(req.headers['x-mysql-port'])) || 3306;
-    if (req.headers['x-mysql-database']) database = String(req.headers['x-mysql-database']);
-    if (req.headers['x-mysql-user']) user = String(req.headers['x-mysql-user']);
-    if (req.headers['x-mysql-password']) password = String(req.headers['x-mysql-password']);
-  }
-
-  if (host === '%') {
-    host = 'localhost'; // Gracefully replace wildcard % to avoid DNS resolve failures
-  }
+  const host = (req?.headers['x-mysql-host'] as string) || process.env.MYSQL_HOST || '37.27.71.198';
+  const port = parseInt((req?.headers['x-mysql-port'] as string) || process.env.MYSQL_PORT || '3306', 10);
+  const database = (req?.headers['x-mysql-database'] as string) || process.env.MYSQL_DB || 'vfnzeaml_CSync';
+  const user = (req?.headers['x-mysql-user'] as string) || process.env.MYSQL_USER || 'vfnzeaml_CSync';
+  const password = (req?.headers['x-mysql-password'] as string) || process.env.MYSQL_PASS || 'vfnzeaml_CSync';
 
   const cacheKey = `${host}:${port}:${database}:${user}:${password}`;
   let pool = poolsCache.get(cacheKey);
@@ -87,7 +74,8 @@ async function ensureTablesExist(pool: mysql.Pool): Promise<boolean> {
 // Use the API key provided by the user, prioritizing environment variables
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 
-app.use(express.json());
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 // API: Health probe
 app.get('/api/health', (req, res) => {
@@ -206,7 +194,88 @@ app.get('/api/ecosystem-state', async (req, res) => {
       return res.json(state);
     }
     
-    return res.json({});
+    // Auto-seed default baseline if database is completely empty
+    const defaultStations = [];
+    for (let i = 1; i <= 50; i++) {
+      defaultStations.push({
+        stationId: `CS-${String(i).padStart(2, '0')}`,
+        pcMacAddress: 'Pending First Run',
+        status: 'LOCKED',
+        activeUserId: null,
+        lastHeartbeat: new Date().toISOString()
+      });
+    }
+
+    const defaultState: any = {
+      users: [
+        {
+          id: 1,
+          fullName: 'Thrinadh Marukonda',
+          idNumber: 'CS-25603',
+          role: 'Admin',
+          gender: 'Male',
+          email: 'marukondathrinadh@gmail.com',
+          mobileNumber: '8500394696',
+          password: 'password123',
+          year: '3',
+          batch: 'Graduate Batch 2023-2026',
+          subject: 'B.Sc Computer Science',
+          parentMobile: '9000123451',
+          streak: 15,
+          streakTier: 'CAMPUS ELITE',
+          xp: 1250,
+          level: 5,
+          attendanceEnergy: 92,
+          reputationScore: 98,
+          campusPresenceScore: 100,
+          isApproved: true,
+          approvalStatus: 'APPROVED',
+          isDeveloper: true,
+          photoBlob: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop',
+          badges: ['Terminal Overlord', 'Perfect Ledger'],
+          stars: { attendance: 5, punctuality: 4, consistency: 5, dedication: 5, resilience: 4, honor: 5 },
+          walletBalance: 250000,
+          upiId: '8500394696@yes',
+          csyncUpi: 'thrinadh@csync',
+          bankAccountNumber: '8500394696'
+        }
+      ],
+      stations: defaultStations,
+      files: [],
+      systemLogs: [
+        { id: 'l1', timestamp: new Date().toLocaleTimeString(), level: 'info', message: 'C-SYNC Core Ecosystem auto-seeded by Developer Thrinadh.', category: 'SYSTEM' },
+        { id: 'l2', timestamp: new Date().toLocaleTimeString(), level: 'success', message: 'Ecosystem state re-seeded with 100% clean MySQL-aligned descriptors.', category: 'SYSTEM' }
+      ],
+      attendanceLogs: [],
+      issues: [],
+      maintenance: [],
+      deviceChangeRequests: [],
+      leaveRequests: [],
+      jobOpportunities: [],
+      jobApplications: [],
+      chatThreads: [],
+      chatMessages: [],
+      bankTransactions: [],
+      accountClosureRequests: [],
+      fundraiserCampaigns: [],
+      fundraiserContributions: [],
+      motherUpi: '8500394696@yes',
+      gatewayAutoApprove: false,
+      deployedModules: [
+        { id: 'exam', name: 'AP Govt Exam Portal', desc: 'Biometric authorization check for examinations', icon: 'FileText', deployed: true },
+        { id: 'transport', name: 'GPS Transport Tracker', desc: 'Live tracker for college buses and security telemetry', icon: 'Compass', deployed: false },
+        { id: 'hostel', name: 'Hostel Occupancy Index', desc: 'Secure register and access bounds indexer', icon: 'Home', deployed: true }
+      ]
+    };
+
+    for (const [key, value] of Object.entries(defaultState)) {
+      await pool.query(
+        'INSERT INTO csync_unified_store (key_name, json_data) VALUES (?, ?) ON DUPLICATE KEY UPDATE json_data = VALUES(json_data)',
+        [key, JSON.stringify(value)]
+      ).catch(() => {});
+    }
+
+    return res.json(defaultState);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

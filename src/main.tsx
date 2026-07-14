@@ -2,6 +2,22 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { safeStorage } from './utils/safeStorage';
+
+// Override global localStorage to ensure 100% in-memory operation (no persistent local storage)
+if (typeof window !== 'undefined') {
+  try {
+    Object.defineProperty(window, 'localStorage', {
+      value: safeStorage,
+      writable: true,
+      configurable: true
+    });
+  } catch (e) {
+    (window as any).localStorage = safeStorage;
+  }
+}
+
+const localStorage = safeStorage;
 
 // Silence expected, benign WebSocket and Vite HMR connection errors during development
 const shouldMute = (msg: string) => {

@@ -3,16 +3,8 @@ class SafeStorage {
   private isStorageAvailable = false;
 
   constructor() {
-    try {
-      if (typeof window !== 'undefined') {
-        const testKey = '__csync_test_storage__';
-        window.localStorage.setItem(testKey, 'test');
-        window.localStorage.removeItem(testKey);
-        this.isStorageAvailable = true;
-      }
-    } catch (e) {
-      this.isStorageAvailable = false;
-    }
+    // Force in-memory storage always as per user instructions
+    this.isStorageAvailable = false;
   }
 
   getItem(key: string): string | null {
