@@ -5,7 +5,7 @@ import {
   ExternalLink, HelpCircle, RotateCw, Eye, Heart, Activity, AlertCircle, 
   Settings, Key, Database, ChevronRight, ArrowLeft
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { LiveClassSession, WhiteboardStroke } from '../types';
 
 interface LiveClassesHubProps {

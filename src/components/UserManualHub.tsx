@@ -6,7 +6,7 @@ import {
   MapPin, Radio, Key, FileText, AlertTriangle, MessageSquare, Briefcase, 
   Calendar, RotateCw, Activity, Heart, AlertCircle, Sparkles
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { playVoice, playHaptic } from '../feedback';
 import { safeStorage } from '../utils/safeStorage';
 

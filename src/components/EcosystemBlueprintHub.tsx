@@ -6,7 +6,7 @@ import {
   Check, Play, Plus, Trash2, Sliders, ShieldCheck, ChevronRight, CheckCircle, RefreshCw, AlertTriangle, FileText, Download, ArrowLeft, ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 
 interface EcosystemBlueprintHubProps {
   db: ClientDatabase;
@@ -260,7 +260,7 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
         "Hardware-bound: Users are tied to a unique device MAC / token signature after initial registration"
       ],
       zones: [
-        { name: "Main Campus", lat: "17.740697", lng: "83.321251", r: "0.3 km" },
+        { name: "College", lat: "17.740697", lng: "83.321251", r: "0.3 km" },
         { name: "Satellite Hub", lat: "17.898094", lng: "83.387790", r: "0.5 km" },
         { name: "Trusted Node", lat: "18.106691", lng: "83.387986", r: "0.5 km" }
       ],

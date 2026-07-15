@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { VanillaQR } from './utils/qrVanilla';
 import { CsyncLogo } from './components/CsyncLogo';
-import { initialUsers, generateStations, initialLogs, initialFiles, initialAttendanceLogs, initialIssues, initialMaintenance } from './mockData';
-import { ClientDatabase } from './clientDb';
+import { ClientDatabase } from './remoteDb';
 import { ModuleC } from './components/ModuleC';
 import { ModuleB } from './components/ModuleB';
 import { ModuleA } from './components/ModuleA';
@@ -17,15 +16,7 @@ const localStorage = safeStorage;
 
 export default function App() {
   // Master client database simulation instance
-  const [db] = useState(() => new ClientDatabase(
-    initialUsers,
-    generateStations(),
-    initialFiles,
-    initialLogs,
-    initialAttendanceLogs,
-    initialIssues,
-    initialMaintenance
-  ));
+  const [db] = useState(() => new ClientDatabase());
 
   // Dynamic accent color state
   const [primaryAccentColor, setPrimaryAccentColor] = useState(() => {
@@ -461,7 +452,7 @@ export default function App() {
             }
           }
         } catch (err2) {
-          console.error("User facing fallback scanner failed in login panel", err2);
+          console.warn("User facing fallback scanner failed in login panel", err2);
           const container = document.getElementById("admin-login-qr-reader");
           if (container && isMounted) {
             container.innerHTML = `
@@ -983,6 +974,7 @@ export default function App() {
                 <div className="md:col-span-7 w-full flex items-center justify-center">
                   <LoginGate 
                     portalType="admin" 
+                    db={db}
                     onSuccess={() => {
                       setAdminAuth(true);
                       safeStorage.setItem('csync_admin_authenticated', 'true');

@@ -6,7 +6,7 @@ import {
   RefreshCw, Compass, HelpCircle, Send, X, Radio, Eye, Check
 } from 'lucide-react';
 import { User } from '../types';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { safeStorage } from '../utils/safeStorage';
 
 const localStorage = safeStorage;

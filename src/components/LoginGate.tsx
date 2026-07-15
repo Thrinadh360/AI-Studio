@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Shield, Key, User, Lock, AlertCircle, Sparkles, Mail } from 'lucide-react';
+import { ClientDatabase } from '../remoteDb';
+import { User as DatabaseUser } from '../types';
 
 interface LoginGateProps {
   portalType: 'pwa' | 'kiosk' | 'shell' | 'admin';
-  onSuccess: () => void;
+  onSuccess: (user?: DatabaseUser) => void;
   telegramOtpSection?: React.ReactNode; // Optional real-time Telegram OTP widget for Admin
+  db: ClientDatabase;
 }
 
-export function LoginGate({ portalType, onSuccess, telegramOtpSection }: LoginGateProps) {
+export function LoginGate({ portalType, onSuccess, telegramOtpSection, db }: LoginGateProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,20 +19,32 @@ export function LoginGate({ portalType, onSuccess, telegramOtpSection }: LoginGa
     e.preventDefault();
     setError('');
 
+    const cleanEmail = username.trim().toLowerCase();
+
     if (portalType === 'pwa') {
       // Student PWA Email & Password Authentication
-      const cleanEmail = username.trim().toLowerCase();
-      if ((cleanEmail === 'student@gdc.edu' || cleanEmail === '230105@gdc.edu') && password === 'csync23') {
-        onSuccess();
-      } else if (cleanEmail === '' || password === '') {
-        setError('Please complete all student fields');
+      const foundUser = db.getUsers().find(usr => 
+        (usr.email?.toLowerCase() === cleanEmail || usr.mobileNumber === cleanEmail || usr.idNumber?.toLowerCase() === cleanEmail) && 
+        usr.password === password
+      );
+
+      if (foundUser) {
+        onSuccess(foundUser);
       } else {
-        setError('Invalid Email or Student password. Try (Email: student@gdc.edu, Pass: csync23)');
+        // Fallback to mock student credentials if user db doesn't match
+        if ((cleanEmail === 'student@gdc.edu' || cleanEmail === '230105@gdc.edu') && password === 'csync23') {
+          onSuccess();
+        } else if (cleanEmail === '' || password === '') {
+          setError('Please complete all student fields');
+        } else {
+          setError('Invalid Email or Student password. Try (Email: student@gdc.edu, Pass: csync23)');
+        }
       }
     } else if (portalType === 'kiosk') {
       // Workstation Kiosk Lockscreen PIN
-      if (password === '5786') {
-        onSuccess();
+      const foundUser = db.getUsers().find(usr => usr.password === password);
+      if (password === '5786' || foundUser) {
+        onSuccess(foundUser);
       } else {
         setError('Access Denied: Invalid Workstation Station PIN.');
       }
@@ -41,11 +56,23 @@ export function LoginGate({ portalType, onSuccess, telegramOtpSection }: LoginGa
         setError('Shell Intercepted: Invalid low-level root access key.');
       }
     } else if (portalType === 'admin') {
-      // Admin dashboard direct password backup
-      if (password === 'vskadmin123' || password === 'm3nadh' || password === 'gdc-csync-admin') {
-        onSuccess();
+      // Admin dashboard direct password/username verification
+      // Match against users in the remote database having 'Admin' role or isDeveloper flag
+      const foundAdmin = db.getUsers().find(usr => 
+        (usr.email?.toLowerCase() === cleanEmail || usr.mobileNumber === cleanEmail || usr.idNumber?.toLowerCase() === cleanEmail) && 
+        usr.password === password &&
+        (usr.role === 'Admin' || usr.isDeveloper)
+      );
+
+      if (foundAdmin) {
+        onSuccess(foundAdmin);
       } else {
-        setError('Access Denied: Invalid security master passcode.');
+        // Direct backup/emergency passcodes
+        if (password === 'vskadmin123' || password === 'm3nadh' || password === 'gdc-csync-admin') {
+          onSuccess();
+        } else {
+          setError('Access Denied: Invalid Admin email/ID or master security passcode.');
+        }
       }
     }
   };
@@ -131,15 +158,17 @@ export function LoginGate({ portalType, onSuccess, telegramOtpSection }: LoginGa
               </div>
             )}
 
-            {portalType === 'pwa' && (
+            {(portalType === 'pwa' || portalType === 'admin') && (
               <div className="space-y-1 text-left">
-                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Registered Email Address</label>
+                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                  {portalType === 'admin' ? 'Admin Email / ID / Mobile' : 'Registered Email Address'}
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
-                    type="email"
+                    type="text"
                     required
-                    placeholder="e.g. student@gdc.edu"
+                    placeholder={portalType === 'admin' ? 'e.g. marukondathrinadh@gmail.com' : 'e.g. student@gdc.edu'}
                     className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all font-mono"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -153,7 +182,7 @@ export function LoginGate({ portalType, onSuccess, telegramOtpSection }: LoginGa
                 {portalType === 'pwa' ? 'Student Password' :
                  portalType === 'kiosk' ? 'Station Lock PIN (4-digit)' :
                  portalType === 'shell' ? 'System Key Hook Root Access Key' :
-                 'Secondary Admin Console Password'}
+                 'Admin Password'}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -163,7 +192,7 @@ export function LoginGate({ portalType, onSuccess, telegramOtpSection }: LoginGa
                   placeholder={portalType === 'pwa' ? 'e.g. csync23' :
                                portalType === 'kiosk' ? 'PIN Code' :
                                portalType === 'shell' ? 'Root Security Token' :
-                               'Enter console passcode'}
+                               'Enter password'}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all font-mono"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -186,10 +215,10 @@ export function LoginGate({ portalType, onSuccess, telegramOtpSection }: LoginGa
           </form>
 
           <div className="pt-2 text-center text-[10px] text-slate-500 font-sans border-t border-slate-900">
-            {portalType === 'pwa' && <span>Suggested Access Credentials: <b>student@gdc.edu</b> / <b>csync23</b></span>}
+            {portalType === 'pwa' && <span>Suggested Access: <b>student@gdc.edu</b> / <b>csync23</b> (or use your remote DB registered credentials)</span>}
             {portalType === 'kiosk' && <span>Official multi-user terminal lock. Admin validation token required.</span>}
             {portalType === 'shell' && <span>Direct hardware abstraction interface. Root credential required.</span>}
-            {portalType === 'admin' && <span>Suggested: <b>Scan Staff QR Code or consult registered HOD for credentials</b></span>}
+            {portalType === 'admin' && <span>Admin login: Use your registered Admin credentials (e.g., <b>marukondathrinadh@gmail.com</b>)</span>}
           </div>
         </div>
       </div>

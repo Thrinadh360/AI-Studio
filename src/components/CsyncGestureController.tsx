@@ -99,7 +99,7 @@ export const CsyncGestureController: React.FC<CsyncGestureControllerProps> = ({
       dispatchNotification('SYSTEM', 'Air Gesture Node Active', 'Webcam motion analyzer linked successfully.');
       playVoice("Contactless smart gestures are now active. Try waving your hand vertically or hand grabbing.");
     } catch (err: any) {
-      console.error("Camera access failed for Gestures:", err);
+      console.warn("Camera access failed for Gestures:", err);
       setHasPermission(false);
       dispatchNotification('SECURITY', 'Webcam Access Blocked', 'Camera access was requested but denied.');
     }

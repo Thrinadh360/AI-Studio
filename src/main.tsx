@@ -27,7 +27,14 @@ const shouldMute = (msg: string) => {
     lowMsg.includes('closed without opened') ||
     lowMsg.includes('failed to connect') ||
     lowMsg.includes('connection reset') ||
-    lowMsg.includes('hmr')
+    lowMsg.includes('hmr') ||
+    lowMsg.includes('camera') ||
+    lowMsg.includes('webcam') ||
+    lowMsg.includes('getusermedia') ||
+    lowMsg.includes('requested device not found') ||
+    lowMsg.includes('devicesnotfounderror') ||
+    lowMsg.includes('overconstrainederror') ||
+    lowMsg.includes('notfounderror')
   );
 };
 

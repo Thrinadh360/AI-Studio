@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Compass, Sun, Zap, Activity, Wifi, CheckCircle 
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { User } from '../types';
 import { playVoice, playHaptic } from '../feedback';
 

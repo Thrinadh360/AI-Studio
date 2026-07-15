@@ -4,7 +4,7 @@ import {
   Activity, UserCheck, Settings, Tv, CheckCircle2, Copy, Trash2, Key, Info, HelpCircle,
   Search, Shield, Zap, AlertOctagon, RefreshCw, X, Radio, Eye
 } from 'lucide-react';
-import { ClientDatabase, getOrGenerateRealHardwareMac } from '../clientDb';
+import { ClientDatabase, getOrGenerateRealHardwareMac } from '../remoteDb';
 import { playVoice, playHaptic } from '../feedback';
 
 interface ModuleBProps {

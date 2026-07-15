@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Wrench, Calendar, AlertTriangle, CheckCircle2, Clock, Plus, PenTool, Clipboard, RefreshCw, UserCheck, Check, Trash } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { StationIssue, MaintenanceActivity } from '../types';
 
 interface ModuleMaintenanceProps {

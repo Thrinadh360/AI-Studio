@@ -8,7 +8,7 @@ import {
   AlertTriangle, Siren, Shield, Eye, Activity, Heart, Cpu, Search, Users, Flame, Zap, PhoneCall, MessageSquare, Newspaper, CloudRain, Sun, Umbrella, Wind, Thermometer, Video,
   Star, Gift, Monitor, Lock, Unlock, Linkedin, Send, Layers, Volume2, Phone, PhoneOff, PhoneIncoming, UserPlus, Pause, Play, VolumeX, VideoOff, Battery, HardDrive, Headphones, IdCard
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { VanillaQR } from '../utils/qrVanilla';
 import { performNativeBiometricAuth } from '../utils/biometricVanilla';
 import { CsyncLogo } from './CsyncLogo';
@@ -240,7 +240,7 @@ interface ModuleCProps {
 
 // 3 locations for College Attendance Support
 export const attendanceCampuses = [
-  { id: 'main_campus', name: 'Main Campus', lat: 17.740697, lon: 83.321251, lng: 83.321251, radius: 0.3, radiusLimit: 150.0 },
+  { id: 'main_campus', name: 'college', lat: 17.740697, lon: 83.321251, lng: 83.321251, radius: 0.3, radiusLimit: 150.0 },
   { id: 'satellite_hub', name: 'Satellite Hub', lat: 17.898094, lon: 83.387790, lng: 83.387790, radius: 0.5, radiusLimit: 300.0 },
   { id: 'trusted_node', name: 'Trusted Node', lat: 18.106691, lon: 83.387986, lng: 83.387986, radius: 0.5, radiusLimit: 300.0 }
 ];
@@ -325,7 +325,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
         
         const regionalNews = [
           `Visakhapatnam beach road academic complexes schedule Smart IoT integration audits. Andhra University Academic Board announces dynamic attendance energy benchmarks, confirming computer labs as regional high-performing champions.`,
-          `Metropolitan traffic routers near the Main Campus optimize signal timings using local optical camera sensors.`,
+          `Metropolitan traffic routers near the college optimize signal timings using local optical camera sensors.`,
           `Students launch real-time acoustic proximity sensors in Lab-B workstations.`,
           `Satellite Hub and Trusted Node campus stations achieve complete database synchronization metrics in active PWA caches.`,
           `Coastal environmental nodes deploy real-time wave-energy telemetry streams direct to student terminals.`
@@ -963,7 +963,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
             }
           }
         } catch (err2) {
-          console.error("Camera fail:", err2);
+          console.warn("Camera fallback active:", err2);
           const container = document.getElementById("pwa-pc-reader");
           if (container && isMounted) {
             container.innerHTML = `
@@ -1114,7 +1114,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
             }
           }
         } catch (err2) {
-          console.error("Camera fail:", err2);
+          console.warn("Camera fallback active:", err2);
           const container = document.getElementById("pwa-admin-reader");
           if (container && isMounted) {
             container.innerHTML = `
@@ -1402,7 +1402,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
       if (gpsSimMeters > activeRadiusLimit && !isUserAdmin) {
         setFaceAttendanceResult({
           success: false,
-          message: `GEOFENCE ERROR: Attendance rejected. You are physically out of bounds of all 3 authorized college nodes (Main Campus, Satellite Hub, Trusted Node). Biometric validation at ${targetCampus.name} is restricted to within ${activeRadiusLimit.toFixed(1)} meters range.`
+          message: `GEOFENCE ERROR: Attendance rejected. You are physically out of bounds of all 3 authorized college nodes (college, Satellite Hub, Trusted Node). Biometric validation at ${targetCampus.name} is restricted to within ${activeRadiusLimit.toFixed(1)} meters range.`
         });
         setIsFaceAttendanceScanning(false);
         db.addLog('SECURITY', `Biometric guard bypass blocked: user ${activeStudent.fullName} failed multi-zone geofencing validation. Outside bounds of all 3 authorized nodes (Current selected: ${targetCampus.name}, dist: ${gpsSimMeters.toFixed(1)}m, limit: ${activeRadiusLimit.toFixed(1)}m).`, 'warning');
@@ -3796,20 +3796,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block text-[8.5px] text-slate-400 font-mono font-bold uppercase">Custom UPI ID (Optional)</label>
-                  <input
-                    type="text"
-                    value={regUpiId}
-                    onChange={(e) => setRegUpiId(e.target.value)}
-                    placeholder={`e.g. user@oksbi or ${db.getMotherUpi()}`}
-                    className="w-full text-white bg-[#03091e] border border-cyan-500/25 rounded-md px-2.5 py-1.5 focus:outline-none"
-                    id="regUpiId"
-                  />
-                  <p className="text-[7.5px] text-amber-300 font-sans leading-normal uppercase">
-                    💡 For the best experience, ensure you use your real phone number and your active bank or UPI application handle (such as @yes, @icici, @okicici, @apl, @ybl, or @hdfcbank) during sign-up or inside your secure profile dashboard.
-                  </p>
-                </div>
+
 
                 <div className="space-y-1">
                   <label className="block text-[8.5px] text-slate-400 font-mono font-bold uppercase">Password</label>
@@ -4834,7 +4821,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
                           )}
                           {gpsSimMeters > activeRadiusLimit && isUserAdmin && (
                             <div className="text-emerald-400 mt-1.5 leading-normal font-sans text-[7.5px] bg-emerald-500/10 p-1.5 rounded border border-emerald-500/15 border-dashed">
-                              🛡️ Admin Coordinates Bypass Active. Unrestricted bounds authorized. Attendance will log under Main Campus.
+                              🛡️ Admin Coordinates Bypass Active. Unrestricted bounds authorized. Attendance will log under college.
                             </div>
                           )}
                           {gpsError && (
@@ -4948,35 +4935,46 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
                            </div>
 
                            {/* AUTOMATIC STATUS DETECTION INFO */}
-                           <div className="space-y-2 p-2 bg-[#020512] rounded border border-cyan-500/20">
-                             <label className="block text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider leading-none">
-                               🎯 Target Workstation Node (CS-01 to CS-50)
-                             </label>
-                             <select
-                               value={scannedPCNode}
-                               onChange={(e) => {
-                                 setScannedPCNode(e.target.value);
-                                 playHaptic('light');
-                               }}
-                               className="w-full bg-[#05091a] border border-cyan-500/35 text-[#00f2ff] text-[9px] font-mono rounded px-1.5 py-1 focus:outline-none focus:border-cyan-400 cursor-pointer"
-                             >
-                               {Array.from({ length: 50 }, (_, i) => {
-                                 const id = `CS-${String(i + 1).padStart(2, '0')}`;
-                                 return (
-                                   <option key={id} value={id} className="bg-[#05091a] text-[#00f2ff]">
-                                     {id} - LAB PC WORKSTATION
-                                   </option>
-                                 );
-                               })}
-                             </select>
+                           <div className="space-y-2 p-2.5 bg-[#020512] rounded border border-cyan-500/20 text-left">
+                             <div className="flex items-center justify-between">
+                               <label className="block text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider leading-none">
+                                 🎯 Auto-Detected Target Workstation
+                               </label>
+                               <span className="px-1.5 py-0.5 text-[8px] bg-green-500/25 border border-green-500/30 text-green-400 rounded font-mono font-bold animate-pulse uppercase leading-none">
+                                 Auto-Fetched
+                               </span>
+                             </div>
+
+                             <div className="flex items-center gap-2 p-2 bg-[#05091a] border border-cyan-500/35 rounded-md">
+                               <Monitor className="w-4 h-4 text-[#00f2ff]" />
+                               <div className="flex-1">
+                                 <div className="text-[11px] font-bold text-[#00f2ff] font-mono leading-none">
+                                   {scannedPCNode} - LAB PC WORKSTATION
+                                 </div>
+                                 <div className="text-[7.5px] text-zinc-400 font-mono leading-none mt-1">
+                                   MAC Address: {db.getStation(scannedPCNode)?.pcMacAddress || 'Pending First Run'}
+                                 </div>
+                               </div>
+                             </div>
+
                              <p className="text-[7.5px] text-slate-400 leading-normal font-mono select-none">
-                               Auto-extracts the ID shown on active kiosks, or select any specific workstation node above to unlock and simulate remote entry.
+                               QR scanner automatically decodes the workstation ID shown on your target lab PC monitor without manual selection.
                              </p>
                            </div>
 
                           <button
                             onClick={() => {
-                              const detectedNode = scannedPCNode || 'CS-01';
+                              // Auto fetch details on scanner activation or lock
+                              let activeKioskId = localStorage.getItem('csync_physical_station_id');
+                              if (!activeKioskId) {
+                                // If no custom kiosk in localStorage, check first available database workstation
+                                const activeStations = db.getStations();
+                                if (activeStations && activeStations.length > 0) {
+                                  activeKioskId = activeStations[0].stationId;
+                                }
+                              }
+                              const detectedNode = activeKioskId || scannedPCNode || 'CS-01';
+                              setScannedPCNode(detectedNode);
                               playHaptic('success');
                               playVoice(`Auto-detected QR code for workstation ${detectedNode}. Resolving secure remote link...`);
                               
@@ -6923,22 +6921,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
                 />
               </div>
 
-              {/* UPI ID */}
-              <div className="space-y-1">
-                <label className="block text-[8px] text-slate-455 uppercase font-mono tracking-wider font-bold">
-                  Virtual VPA / UPI ID:
-                </label>
-                <input
-                  type="text"
-                  value={profileEditUpiId}
-                  onChange={(e) => setProfileEditUpiId(e.target.value)}
-                  className="w-full text-xs text-white bg-[#030612] border border-cyan-500/20 focus:border-cyan-400/80 rounded px-2.5 py-1.5 focus:outline-none font-sans"
-                  placeholder={`e.g. ${db.getMotherUpi()}`}
-                />
-                <p className="text-[7.5px] text-amber-300 font-sans leading-normal uppercase">
-                  💡 For the best experience, ensure you use your real phone number and your active bank or UPI application handle (such as @yes, @icici, @okicici, @apl, @ybl, or @hdfcbank) during sign-up or inside your secure profile dashboard.
-                </p>
-              </div>
+
 
               {/* Photo Indicator / Direct File Browsing Area */}
               <div className="space-y-2 py-1">

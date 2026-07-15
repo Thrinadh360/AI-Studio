@@ -17,7 +17,7 @@ import {
   Volume2,
   AlertCircle
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { User } from '../types';
 import { CsyncWebRTCCommunicator } from './CsyncWebRTCCommunicator';
 

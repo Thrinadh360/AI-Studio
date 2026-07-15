@@ -5,7 +5,7 @@ import {
   Sparkles, Layers, Activity, Lock, Globe, Smartphone, RefreshCw, X, ChevronRight, Play, ArrowLeft, Video, Clock,
   Smile, Download, Paperclip, FileText, Image as ImageIcon, Mic, MapPin
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { ChatThread, ChatMessage, UserStory, CsyncApiProject, User } from '../types';
 import { safeStorage } from '../utils/safeStorage';
 

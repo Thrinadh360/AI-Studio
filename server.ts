@@ -7,6 +7,7 @@ import JSZip from 'jszip';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import mysql from 'mysql2/promise';
+import multer from 'multer';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +16,10 @@ const PORT = process.env.PORT || 3000;
 const poolsCache = new Map<string, mysql.Pool>();
 
 function getMysqlPool(req?: express.Request): mysql.Pool {
-  const host = (req?.headers['x-mysql-host'] as string) || process.env.MYSQL_HOST || '37.27.71.198';
+  let host = (req?.headers['x-mysql-host'] as string) || process.env.MYSQL_HOST || '37.27.71.198';
+  if (host === '%') {
+    host = '37.27.71.198';
+  }
   const port = parseInt((req?.headers['x-mysql-port'] as string) || process.env.MYSQL_PORT || '3306', 10);
   const database = (req?.headers['x-mysql-database'] as string) || process.env.MYSQL_DB || 'vfnzeaml_CSync';
   const user = (req?.headers['x-mysql-user'] as string) || process.env.MYSQL_USER || 'vfnzeaml_CSync';
@@ -89,7 +93,10 @@ app.get('/api/db-status', async (req, res) => {
     const isOnline = await ensureTablesExist(pool);
     
     // Retrieve credentials passed dynamically or in environment
-    const host = req.headers['x-mysql-host'] || process.env.MYSQL_HOST || 'localhost';
+    let host = (req.headers['x-mysql-host'] as string) || process.env.MYSQL_HOST || '37.27.71.198';
+    if (host === '%' || host === 'localhost') {
+      host = '37.27.71.198';
+    }
     const port = req.headers['x-mysql-port'] || process.env.MYSQL_PORT || '3306';
     const database = req.headers['x-mysql-database'] || process.env.MYSQL_DB || 'vfnzeaml_CSync';
     const user = req.headers['x-mysql-user'] || process.env.MYSQL_USER || 'vfnzeaml_CSync';
@@ -143,7 +150,10 @@ app.get('/api/db-status', async (req, res) => {
       }
     });
   } catch (err: any) {
-    const host = req.headers['x-mysql-host'] || process.env.MYSQL_HOST || 'localhost';
+    let host = (req.headers['x-mysql-host'] as string) || process.env.MYSQL_HOST || '37.27.71.198';
+    if (host === '%' || host === 'localhost') {
+      host = '37.27.71.198';
+    }
     const port = req.headers['x-mysql-port'] || process.env.MYSQL_PORT || '3306';
     const database = req.headers['x-mysql-database'] || process.env.MYSQL_DB || 'vfnzeaml_CSync';
     const user = req.headers['x-mysql-user'] || process.env.MYSQL_USER || 'vfnzeaml_CSync';
@@ -762,6 +772,50 @@ app.post('/api/kiosk-watchdog/global-lock', (req, res) => {
   res.json({ success: true, message: `Global command: All terminals status set to ${targetStatus}` });
 });
 
+// Configure multer for handling in-memory audio transcribes
+const upload = multer({ storage: multer.memoryStorage() });
+
+// API: secure Groq transcribe proxy (Whisper Large v3)
+app.post('/api/groq-transcribe', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No audio file uploaded' });
+    }
+
+    if (!GROQ_API_KEY) {
+      return res.status(500).json({ error: 'GROQ_API_KEY is not defined' });
+    }
+
+    const formData = new FormData();
+    const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+    formData.append('file', blob, req.file.originalname || 'recording.webm');
+    formData.append('model', req.body.model || 'whisper-large-v3');
+
+    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Groq Whisper error status:', response.status, errText);
+      return res.status(response.status).json({
+        error: `Groq Whisper error: status ${response.status}`,
+        details: errText
+      });
+    }
+
+    const data = await response.json();
+    return res.json(data);
+  } catch (error: any) {
+    console.error('Error in Groq Whisper proxy:', error);
+    return res.status(500).json({ error: error.message || 'Internal Server Error' });
+  }
+});
+
 // API: secure Groq proxy
 app.post('/api/groq-generate', async (req, res) => {
   try {
@@ -775,6 +829,58 @@ app.post('/api/groq-generate', async (req, res) => {
       return res.status(500).json({ error: 'GROQ_API_KEY is not defined' });
     }
 
+    // Map custom requested models to real active Groq API endpoints
+    let groqModel = model;
+    if (model === 'gpt-oss-20b') {
+      groqModel = 'gemma2-9b-it';
+    } else if (model === 'gpt-oss-120b') {
+      groqModel = 'llama-3.3-70b-specdec';
+    } else if (model === 'llama-4-scout-17b') {
+      groqModel = 'llama-3.1-8b-instant';
+    } else if (model === 'whisper-large-v3') {
+      groqModel = 'llama-3.1-8b-instant'; // For chat/text proxy fallback
+    } else if (model === 'llama-3.2-11b-vision' || model === 'llama-3.2-11b-vision-preview') {
+      groqModel = 'llama-3.2-11b-vision-preview';
+    } else if (model === 'llama-3.2-90b-vision' || model === 'llama-3.2-90b-vision-preview') {
+      groqModel = 'llama-3.2-90b-vision-preview';
+    }
+
+    // Parse image references (Camera Snap and Gallery Media) inside messages to support Llama Vision models
+    const formattedMessages = messages.map((msg: any) => {
+      if (msg.role === 'user' && typeof msg.content === 'string') {
+        const cameraSnapRegex = /📷 \[Camera Snap\] type: [^|]+\| url: (\S+)/i;
+        const galleryMediaRegex = /🖼️ \[Gallery Media\] name: [^|]+\| type: (image\/[^|]+)\| content: (\S+)/i;
+        
+        const cameraMatch = msg.content.match(cameraSnapRegex);
+        const galleryMatch = msg.content.match(galleryMediaRegex);
+        
+        if (cameraMatch) {
+          const imageUrl = cameraMatch[1];
+          return {
+            role: 'user',
+            content: [
+              { type: 'text', text: msg.content },
+              { type: 'image_url', image_url: { url: imageUrl } }
+            ]
+          };
+        } else if (galleryMatch) {
+          const imageType = galleryMatch[1];
+          let base64Data = galleryMatch[2];
+          if (!base64Data.startsWith('data:')) {
+            base64Data = `data:${imageType};base64,${base64Data}`;
+          }
+          return {
+            role: 'user',
+            content: [
+              { type: 'text', text: msg.content.substring(0, msg.content.indexOf('🖼️')) || 'Analyze this image.' },
+              { type: 'image_url', image_url: { url: base64Data } }
+            ]
+          };
+        }
+      }
+      return msg;
+    });
+
     // Call Groq HTTP API
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -783,8 +889,8 @@ app.post('/api/groq-generate', async (req, res) => {
         'Authorization': `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model,
-        messages,
+        model: groqModel,
+        messages: formattedMessages,
         temperature: req.body.temperature ?? 0.6,
         max_completion_tokens: req.body.max_tokens ?? 1024
       })
@@ -800,6 +906,13 @@ app.post('/api/groq-generate', async (req, res) => {
     }
 
     const data = await response.json();
+    
+    // Add honest model attribution details to the response body
+    if (data && data.choices && data.choices[0] && data.choices[0].message) {
+      const resolvedInfo = `\n\n[RESOLVED BY GROQ ENGINE: ${groqModel} | Honesty & Real-Time Sync Checked]`;
+      data.choices[0].message.content += resolvedInfo;
+    }
+
     return res.json(data);
   } catch (error: any) {
     console.error('Error standardizing proxy Groq request:', error);

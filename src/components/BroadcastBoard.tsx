@@ -16,7 +16,7 @@ import {
   FileText,
   Bookmark
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { DiscussionTopic, DiscussionComment } from '../types';
 
 interface BroadcastBoardProps {

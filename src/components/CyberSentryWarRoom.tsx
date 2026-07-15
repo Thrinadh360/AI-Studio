@@ -17,7 +17,7 @@ import {
   Unlock,
   Sliders
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 
 interface CyberSentryWarRoomProps {
   db: ClientDatabase;

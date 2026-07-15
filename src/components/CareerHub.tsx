@@ -3,7 +3,7 @@ import {
   Briefcase, FileText, PlusCircle, Search, BadgeCheck, Send, Sparkles, 
   MapPin, DollarSign, Calendar, Sliders, ChevronDown, Check, Building, Users
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { User, JobOpportunity } from '../types';
 
 interface CareerHubProps {

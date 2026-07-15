@@ -29,7 +29,7 @@ import {
   Zap,
   BookOpen
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { User } from '../types';
 
 interface CampusArTwinProps {

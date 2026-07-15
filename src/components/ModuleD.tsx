@@ -62,7 +62,7 @@ import {
   Unlock,
   Shield
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { User, CampusHoliday, PanicAlert } from '../types';
 import { DevDeckCtrl } from './DevDeckCtrl';
 import { GamificationEngine } from './GamificationEngine';
@@ -4213,12 +4213,7 @@ export const ModuleD: React.FC<ModuleDProps> = ({
               </div>
             )}
 
-            {activeAdminTab === 'banking' && (() => {
-              return (
-                <div className="p-10 text-center text-slate-400 font-mono text-xs border border-dashed border-white/5 rounded-2xl bg-slate-900/40 uppercase animate-fadeIn">
-                  Banking and UPI modules have been fully decommissioned from the C-SYNC platform.
-                </div>
-              );
+            {false && (() => {
               // Calculate system-wide liquidity & reserves
               const allSystemUsers = db.getUsers();
               const systemReserves = allSystemUsers.reduce((sum, u) => sum + (u.walletBalance || 0), 0);
@@ -4610,38 +4605,6 @@ export const ModuleD: React.FC<ModuleDProps> = ({
                           {/* Technical Network Specs */}
                           <div className="bg-slate-950/80 p-3 rounded-xl border border-white/5 space-y-1.5 text-[10px] font-mono leading-none">
                             <div className="flex justify-between items-center py-1 border-b border-white/5">
-                              <span className="text-slate-400">LIQUIDITY BALANCE</span>
-                              <span className="font-black text-white text-xs">₹{(selectedUser.walletBalance || 0).toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-1 border-b border-white/5">
-                              <span className="text-slate-400">BANK ACCOUNT CODE</span>
-                              <span className="font-bold text-slate-200">{selectedUser.bankAccountNumber || selectedUser.mobileNumber?.replace(/[^0-9]/g, '') || '8500394696'}</span>
-                            </div>
-                            <div className="flex justify-between items-center py-1 border-b border-white/5">
-                              <span className="text-slate-400">ORIGINAL UPI ADDRESS</span>
-                              <div className="flex items-center gap-1.5">
-                                {editUpiUserId === selectedUser.id ? (
-                                  <input
-                                    type="text"
-                                    value={editUpiValue}
-                                    onChange={(e) => setEditUpiValue(e.target.value)}
-                                    className="bg-black border border-cyan-500/40 text-white font-mono text-[9px] px-1.5 py-0.5 rounded focus:outline-none"
-                                    placeholder="e.g. mobile@okicici"
-                                  />
-                                ) : (
-                                  <span className="font-bold text-[#00f2ff]">
-                                    {selectedUser.upiId || (selectedUser.mobileNumber ? `${selectedUser.mobileNumber.replace(/[^0-9]/g, '')}@yes` : db.getMotherUpi())}
-                                  </span>
-                                )}
-                                <button
-                                  onClick={() => handleOverwriteUpi(selectedUser.id)}
-                                  className="px-1.5 py-0.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/30 text-[7px] text-cyan-300 font-mono rounded transition-all"
-                                >
-                                  {editUpiUserId === selectedUser.id ? 'SAVE' : 'EDIT'}
-                                </button>
-                              </div>
-                            </div>
-                            <div className="flex justify-between items-center py-1 border-b border-white/5">
                               <span className="text-slate-400">MOBILE NUMBER</span>
                               <span className="font-bold text-slate-200">{selectedUser.mobileNumber || 'N/A'}</span>
                             </div>
@@ -4652,56 +4615,11 @@ export const ModuleD: React.FC<ModuleDProps> = ({
                               </span>
                             </div>
                             <div className="flex justify-between items-center py-1">
-                              <span className="text-slate-400">TRANSACTIONAL PRIVILEGE</span>
-                              <span className={`font-bold px-1 rounded text-[8px] ${frozenUserIds.includes(selectedUser.id) ? 'bg-red-950 text-red-450 border border-red-500/30' : 'bg-emerald-950 text-emerald-400 border border-emerald-500/30'}`}>
-                                {frozenUserIds.includes(selectedUser.id) ? 'RESTRICTED / FROZEN' : 'APPROVED'}
+                              <span className="text-slate-400">ACCESS LEVEL Privilege</span>
+                              <span className="font-bold px-1 rounded text-[8px] bg-emerald-950 text-emerald-400 border border-emerald-500/30">
+                                APPROVED SYSTEM ACCESS
                               </span>
                             </div>
-                          </div>
-
-                          {/* Cyber Administrative Override Actions */}
-                          <div className="space-y-2 mt-4 pt-2 border-t border-white/5">
-                            <span className="block text-[8px] font-mono uppercase tracking-wider font-bold text-slate-400">SECURITY BYPASS CHANNELS</span>
-                            
-                            <button
-                              type="button"
-                              onClick={() => handleToggleFreeze(selectedUser.id)}
-                              className={`w-full py-2.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 border ${
-                                frozenUserIds.includes(selectedUser.id)
-                                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/45 shadow-sm shadow-emerald-500/5'
-                                  : 'bg-red-950/40 border-red-500/40 text-red-400 hover:bg-red-900/45 shadow-sm shadow-red-500/5'
-                              }`}
-                            >
-                              {frozenUserIds.includes(selectedUser.id) ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                              {frozenUserIds.includes(selectedUser.id) ? 'UNFREEZE ACCOUNT GATE' : 'FREEZE TRANSACTION WINDOW'}
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newBal = prompt(`Directly overwrite financial ledger balance for ${selectedUser.fullName}. Enter new target value in INR:`, (selectedUser.walletBalance || 0).toString());
-                                if (newBal !== null) {
-                                  const amt = parseInt(newBal);
-                                  if (!isNaN(amt) && amt >= 0) {
-                                    const res = db.masterOverrideBalance(selectedUser.id, amt);
-                                    if (res.success) {
-                                      playVoice(`Balance overridden. Set target node to Rupees ${amt}.`);
-                                      playHaptic('heavy');
-                                      onRefreshAll();
-                                      setAllUsers(db.getUsers());
-                                    } else {
-                                      alert(res.message);
-                                    }
-                                  } else {
-                                    alert('Invalid balance input.');
-                                  }
-                                }
-                              }}
-                              className="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded-xl text-slate-300 font-mono text-[10px] uppercase font-bold tracking-wider hover:border-cyan-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                            >
-                              <Shield className="w-3 h-3 text-cyan-400" />
-                              FORCE OVERWRITE BALANCE
-                            </button>
                           </div>
                         </div>
                       ) : (
@@ -4709,7 +4627,7 @@ export const ModuleD: React.FC<ModuleDProps> = ({
                           <Landmark className="w-10 h-10 text-slate-600 mb-2.5 animate-pulse" />
                           <span className="text-[10px] uppercase font-mono font-bold text-slate-400">Node Specification Stream Stopped</span>
                           <p className="text-[9.5px] leading-relaxed max-w-xs mt-1 font-sans">
-                            Select an active User Node from the dropdown list to pull up their real-time device signature, bank accounts, trust index, and trigger compliance lockdowns.
+                            Select an active User Node from the dropdown list to pull up their real-time device signature, trust index, and access privileges.
                           </p>
                         </div>
                       )}
@@ -5468,162 +5386,6 @@ export const ModuleD: React.FC<ModuleDProps> = ({
         </div>
         
       </div>
-
-      {/* SECURE DUAL-CHANNEL UPI LIVE SETTLEMENT MODAL */}
-      {activeUpiDispatch && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="bg-[#030712] border-2 border-pink-500/45 rounded-2xl p-6 w-full max-w-md relative text-left shadow-[0_0_25px_rgba(255,42,133,0.15)] overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#ff2a85] to-transparent animate-pulse" />
-
-            <button 
-              onClick={() => {
-                setActiveUpiDispatch(null);
-                playVoice("Settlement sequence aborted safely.");
-                playHaptic('warning');
-              }}
-              className="absolute right-4 top-4 hover:text-white text-slate-500 transition-all cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="mb-4">
-              <span className="text-[8px] bg-pink-950/80 border border-pink-500/30 text-pink-400 px-2 py-0.5 rounded font-mono font-bold tracking-widest uppercase animate-pulse">
-                LIVE SENTRY CHANNEL
-              </span>
-              <h3 className="text-sm font-black text-[#00f2ff] font-orbitron tracking-widest mt-2 uppercase flex items-center gap-2">
-                <Landmark className="w-4.5 h-4.4 text-[#ff2a85] animate-pulse" />
-                SECURE UPI DISPATCHER
-              </h3>
-              <p className="text-slate-400 text-[10px] mt-1 font-sans leading-normal">
-                {activeUpiDispatch.type === 'DEPOSIT' 
-                  ? "Awaiting direct UPI deposit to Master Reserves account." 
-                  : "Dispatching outbound real UPI payout to student target handle."}
-              </p>
-            </div>
-
-            {/* FLOW SCHEMATICS COMPLIANCE */}
-            <div className="space-y-3.5">
-              <span className="block text-[8px] font-mono uppercase font-bold text-slate-500 tracking-wider">LEDGER DIRECTION ANALYSIS</span>
-              
-              <div className="bg-[#050b18] border border-white/5 rounded-xl p-3 flex items-center justify-between font-mono text-[10px]">
-                {activeUpiDispatch.type === 'DEPOSIT' ? (
-                  <>
-                    <div className="text-left w-[40%] min-w-0">
-                      <span className="text-slate-500 block text-[8px] uppercase font-bold">SENDER</span>
-                      <span className="text-white font-sans font-semibold truncate block text-xs">{activeUpiDispatch.targetUser.fullName}</span>
-                      <span className="text-slate-400 block text-[9px] truncate">Student Node</span>
-                    </div>
-                    <div className="text-center w-[20%] flex flex-col items-center">
-                      <span className="font-bold text-[#ff2a85] text-xs font-mono">₹{activeUpiDispatch.amount}</span>
-                      <ArrowUpRight className="w-4 h-4 text-pink-500 animate-pulse mt-0.5" />
-                    </div>
-                    <div className="text-right w-[40%] min-w-0">
-                      <span className="text-slate-500 block text-[8px] uppercase font-bold">RECIPIENT (TO)</span>
-                      <span className="text-[#ff2a85] font-black block text-xs truncate">{db.getMotherUpi()}</span>
-                      <span className="text-slate-400 block text-[8px] uppercase">Sovereign Reserve</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-left w-[40%] min-w-0">
-                      <span className="text-slate-500 block text-[8px] uppercase font-bold">SENDER (FROM)</span>
-                      <span className="text-cyan-400 font-black block text-xs truncate">{db.getMotherUpi()}</span>
-                      <span className="text-slate-400 block text-[8px] uppercase">Sovereign Reserve</span>
-                    </div>
-                    <div className="text-center w-[20%] flex flex-col items-center">
-                      <span className="font-bold text-[#ff2a85] text-xs font-mono">₹{activeUpiDispatch.amount}</span>
-                      <ArrowDownLeft className="w-4 h-4 text-pink-500 animate-pulse mt-0.5" />
-                    </div>
-                    <div className="text-right w-[40%] min-w-0">
-                      <span className="text-slate-500 block text-[8px] uppercase font-bold font-mono">RECIPIENT (TO)</span>
-                      <span className="text-white font-sans font-semibold truncate block text-xs">{activeUpiDispatch.targetUser.fullName}</span>
-                      <span className="text-pink-400 font-bold block text-[10px] truncate">{activeUpiDispatch.targetUpiId}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* DYNAMIC QR MATRIX */}
-              <div className="flex flex-col items-center justify-center py-4 bg-[#050b18]/60 rounded-xl border border-white/5 space-y-3 relative">
-                <div className="p-3 bg-[#030712] rounded-xl border-2 border-dashed border-[#ff2a85]/45 shadow-[0_0_15px_rgba(255,42,133,0.06)]">
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&color=255-42-133&bgcolor=3-7-18&data=${encodeURIComponent(activeUpiDispatch.targetUpiUrl)}`}
-                    alt="Real Bhim UPI Compliance QR Code Indicator"
-                    className="w-40 h-40 rounded-lg select-none pointer-events-none"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                <div className="text-center space-y-1">
-                  <span className="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-wider">SCAN COMPLIANCE QUICKPAY</span>
-                  <p className="text-[9px] text-slate-500 max-w-xs px-4 leading-normal">
-                    Secure transaction routing token for <strong className="text-[#ff2a85] font-mono">₹{activeUpiDispatch.amount}</strong>. Fully mapped across UPI applications.
-                  </p>
-                </div>
-              </div>
-
-              {/* OUTBOUND REDIRECT DEEP LINK */}
-              <a
-                href={activeUpiDispatch.targetUpiUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => playHaptic('light')}
-                className="w-full py-2.5 bg-gradient-to-r from-pink-500/20 to-indigo-500/20 hover:from-pink-500/30 hover:to-indigo-500/30 border border-pink-500/35 text-pink-400 hover:text-pink-300 rounded-xl text-center font-mono text-[10px] font-bold tracking-widest uppercase block transition-all hover:shadow-[0_0_12px_rgba(255,42,133,0.1)] active:scale-[0.98] cursor-pointer"
-              >
-                🔗 LAUNCH PHYSICAL UPI LINK (GPay / PhonePe)
-              </a>
-
-              {/* VERIFY / DECIDE CONTROLS */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveUpiDispatch(null);
-                    playVoice("Settlement sequence aborted safely.");
-                    playHaptic('warning');
-                  }}
-                  className="py-3 bg-slate-900 hover:bg-slate-800 border border-white/10 text-slate-350 hover:text-white rounded-xl text-xs font-mono font-bold uppercase transition-all tracking-wider active:scale-[0.98] cursor-pointer text-center"
-                >
-                  ABORT DISPATCH
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (activeUpiDispatch.type === 'DEPOSIT') {
-                      const res = db.depositMoney(activeUpiDispatch.targetUser.id, activeUpiDispatch.amount, activeUpiDispatch.purpose);
-                      if (res.success) {
-                        playVoice(`Real UPI deposit reconciled. Node of ${activeUpiDispatch.targetUser.fullName} credited.`);
-                        playHaptic('heavy');
-                        setAdjustAmount('');
-                        onRefreshAll();
-                        setAllUsers(db.getUsers());
-                      } else {
-                        alert(res.message);
-                      }
-                    } else {
-                      const res = db.withdrawMoney(activeUpiDispatch.targetUser.id, activeUpiDispatch.amount, activeUpiDispatch.purpose);
-                      if (res.success) {
-                        playVoice(`Real UPI debit payout synchronized. Node of ${activeUpiDispatch.targetUser.fullName} debited.`);
-                        playHaptic('heavy');
-                        setAdjustAmount('');
-                        onRefreshAll();
-                        setAllUsers(db.getUsers());
-                      } else {
-                        alert(res.message);
-                      }
-                    }
-                    setActiveUpiDispatch(null);
-                  }}
-                  className="py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-mono font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] active:scale-[0.98] cursor-pointer text-center"
-                >
-                  SETTLE LEDGER
-                </button>
-              </div>
-
-            </div>
-
-          </div>
-        </div>
-      )}
 
       {/* MODAL WINDOW: simulated add new member form */}
       {showAddMemberModal && (

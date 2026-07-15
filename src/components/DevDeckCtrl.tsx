@@ -6,7 +6,7 @@ import {
   Sparkles, AlertCircle, Linkedin, Save, ShieldCheck, Terminal, HardDrive, Eye,
   Lock
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { User, CampusHoliday, PanicAlert, Station } from '../types';
 import { safeStorage } from '../utils/safeStorage';
 
@@ -566,7 +566,7 @@ export const DevDeckCtrl: React.FC<DevDeckCtrlProps> = ({
     setDiagnosticsReport('Scanning workspace...');
     
     setTimeout(() => {
-      setScanProgressText('Scanning file allocations: App.tsx, clientDb.ts, index.html...');
+      setScanProgressText('Scanning file allocations: App.tsx, remoteDb.ts, index.html...');
     }, 400);
 
     setTimeout(() => {
@@ -949,7 +949,7 @@ export const DevDeckCtrl: React.FC<DevDeckCtrlProps> = ({
 
   const toggleMaintenanceGlobal = () => {
     setEnableMaintenance(!enableMaintenance);
-    addTerminalLog('SYSTEM', !enableMaintenance ? 'warn' : 'success', !enableMaintenance ? 'Campus OS forced into global maintenance template.' : 'Main Campus OS operational');
+    addTerminalLog('SYSTEM', !enableMaintenance ? 'warn' : 'success', !enableMaintenance ? 'Campus OS forced into global maintenance template.' : 'College OS operational');
   };
 
   const userSubscriptName = (u: User) => `${u.idNumber || 'N/A'}`;

@@ -6,7 +6,7 @@ import {
   Bell, BellRing, Video, Lock, Eye, Settings, ShieldAlert, Sparkles, Hand,
   Battery, Thermometer, Headphones, HardDrive
 } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { User, WeatherInfo, MorningBrief } from '../types';
 import { safeStorage } from '../utils/safeStorage';
 
@@ -578,7 +578,7 @@ export const CsyncEcosystemHub: React.FC<CsyncEcosystemHubProps> = ({
   // Fetch real-time weather from Open-Meteo
   const fetchLiveWeather = async () => {
     setWeatherLoading(true);
-    const lat = 17.740697; // Main Campus coords
+    const lat = 17.740697; // College coords
     const lon = 83.321251;
     try {
       const response = await fetch(
@@ -657,7 +657,7 @@ export const CsyncEcosystemHub: React.FC<CsyncEcosystemHubProps> = ({
       const fallbackTemp = 31;
       const fallbackHumidity = 76;
       const fallbackWind = 14;
-      const fallbackAlert = `☀️ Dynamic regional index is stable (${fallbackTemp}°C) near Main Campus. High-contrast ambient UV indexes require basic shade precautions.`;
+      const fallbackAlert = `☀️ Dynamic regional index is stable (${fallbackTemp}°C) near College. High-contrast ambient UV indexes require basic shade precautions.`;
 
       const fallbackCalc: WeatherInfo = {
         temp: fallbackTemp,
@@ -668,7 +668,7 @@ export const CsyncEcosystemHub: React.FC<CsyncEcosystemHubProps> = ({
         alert: fallbackAlert,
         latitude: lat,
         longitude: lon,
-        locationName: 'Main Campus',
+        locationName: 'College',
         heatwaveRisk: 'LOW',
         uvIndex: 6,
         lastUpdated: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })
@@ -1810,7 +1810,7 @@ export const CsyncEcosystemHub: React.FC<CsyncEcosystemHubProps> = ({
               </div>
               
               <div className="flex items-center justify-between pb-1 border-b border-white/5">
-                <span className="text-[10px] font-bold text-zinc-300 font-sans tracking-wide">Main Campus Coordinates</span>
+                <span className="text-[10px] font-bold text-zinc-300 font-sans tracking-wide">College Coordinates</span>
                 <button 
                   onClick={fetchLiveWeather}
                   disabled={weatherLoading}
@@ -1846,7 +1846,7 @@ export const CsyncEcosystemHub: React.FC<CsyncEcosystemHubProps> = ({
               )}
               
               <div className="bg-[#031c20]/50 border border-cyan-500/10 p-2 rounded text-[8.5px] font-mono text-cyan-400">
-                🌐 Meteorological telemetry pulled live from Open-Meteo REST service maps. Matches Main Campus coordinates (17.740697, 83.321251) in real-time.
+                🌐 Meteorological telemetry pulled live from Open-Meteo REST service maps. Matches College coordinates (17.740697, 83.321251) in real-time.
               </div>
             </div>
 

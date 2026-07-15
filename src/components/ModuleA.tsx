@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, AlertTriangle, Cpu, Command, Shield, Wifi, RefreshCw, Key, Mic } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 
 interface ModuleAProps {
   db: ClientDatabase;

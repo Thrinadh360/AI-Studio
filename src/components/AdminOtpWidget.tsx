@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Send, CheckCircle2, AlertCircle, RefreshCw, Phone } from 'lucide-react';
-import { ClientDatabase } from '../clientDb';
+import { ClientDatabase } from '../remoteDb';
 import { playVoice, playHaptic } from '../feedback';
 import { safeStorage } from '../utils/safeStorage';
 
