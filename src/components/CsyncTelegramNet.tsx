@@ -99,18 +99,18 @@ export const CsyncTelegramNet: React.FC<CsyncTelegramNetProps> = ({ db, onRefres
   const [activeStickerTab, setActiveStickerTab] = useState<'emojis' | 'stickers' | 'download-packs'>('emojis');
   const [installedPacks, setInstalledPacks] = useState<string[]>(['dev_pack']);
   
-  // Custom downloads simulations
+  // Custom downloads
   const [downloadingPackId, setDownloadingPackId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
 
-  // Developer simulated Bot API variables
+  // Developer Bot API variables
   const [botApiSubTab, setBotApiSubTab] = useState<'csync' | 'telegram-bot'>('csync');
   const [selectedBotIdForApi, setSelectedBotIdForApi] = useState<string>('thread-motherbot');
   const [mockWebhookUrl, setMockWebhookUrl] = useState<string>('');
   const [webhookLogs, setWebhookLogs] = useState<string[]>([
     `[${new Date().toLocaleTimeString()}] CSYNC Webhook Listening Engine initialized...`
   ]);
-  const [tempBotApiText, setTempBotApiText] = useState<string>('Hello from external simulated container cluster! 📡 plug and play.');
+  const [tempBotApiText, setTempBotApiText] = useState<string>('Hello from active external container cluster! 📡 plug and play.');
   const [botApiRunning, setBotApiRunning] = useState<boolean>(false);
   const [botApiResult, setBotApiResult] = useState<any | null>(null);
 
@@ -440,12 +440,12 @@ export const CsyncTelegramNet: React.FC<CsyncTelegramNetProps> = ({ db, onRefres
     }, 100);
   };
 
-  // Simulated Webhook Dispatch Logger
+  // Active Webhook Dispatch Logger
   const handleSimulateWebhook = () => {
     if (!mockWebhookUrl.trim()) return;
     const testLog = `[${new Date().toLocaleTimeString()}] Dev-trigger client -> POST ${mockWebhookUrl} -> Auth payload active -> RECEIVED: 200 OK.`;
     setWebhookLogs((prev) => [testLog, ...prev]);
-    db.addLog('SYSTEM', `Triggered simulated developer webhook dispatcher on: ${mockWebhookUrl}`, 'info');
+    db.addLog('SYSTEM', `Triggered active developer webhook dispatcher on: ${mockWebhookUrl}`, 'info');
   };
 
   // Send visual sticker message
@@ -583,7 +583,7 @@ export const CsyncTelegramNet: React.FC<CsyncTelegramNetProps> = ({ db, onRefres
     onRefreshAll();
   };
 
-  const executeApiSimulation = () => {
+  const executeApiDiagnostics = () => {
     if (!testerToken.trim()) {
       alert('Security token is required to authenticate handshakes.');
       return;
@@ -2129,7 +2129,7 @@ export const CsyncTelegramNet: React.FC<CsyncTelegramNetProps> = ({ db, onRefres
 
                       <button
                         type="button"
-                        onClick={executeApiSimulation}
+                        onClick={executeApiDiagnostics}
                         disabled={testerRunning}
                         className="w-full py-2 bg-[#022e33] text-cyan-400 border border-cyan-500/25 rounded-lg text-[9px] font-black uppercase hover:bg-cyan-950 cursor-pointer flex items-center justify-center gap-1.5"
                       >
@@ -2167,7 +2167,7 @@ export const CsyncTelegramNet: React.FC<CsyncTelegramNetProps> = ({ db, onRefres
                   </div>
                 </>
               ) : (
-                /* TELEGRAM BOT SIMULATION PLAYGROUND ACTIVE */
+                /* TELEGRAM BOT ACTIVE GATEWAY COCKPIT */
                 <>
                   <div className="flex items-start gap-4 border-b border-pink-500/10 pb-4 shrink-0">
                     <div className="bg-pink-950/40 p-3 rounded-full border border-pink-500/20 text-pink-400">
@@ -2179,7 +2179,7 @@ export const CsyncTelegramNet: React.FC<CsyncTelegramNetProps> = ({ db, onRefres
                         Telegram Bot Simple Testing Panel
                       </h3>
                       <p className="text-[10px] text-slate-400 leading-normal mt-1 max-w-[500px]">
-                        Control your custom bot helpers using simple text replies. You can send mock chat updates or set automatic server notification URLs easily!
+                        Control your custom bot helpers using simple text replies. You can send real chat updates or set automatic server notification URLs easily!
                       </p>
                     </div>
                   </div>

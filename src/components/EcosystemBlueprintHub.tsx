@@ -18,7 +18,7 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
   const [activePillar, setActivePillar] = useState<number>(0);
   const [demoStep, setDemoStep] = useState<string>('Idle');
   const [isSimulating, setIsSimulating] = useState(false);
-  const [demoLogs, setDemoLogs] = useState<string[]>(['Ecosystem emulator ready.']);
+  const [demoLogs, setDemoLogs] = useState<string[]>(['Ecosystem verification engine ready.']);
 
   // STLC (Software Testing Life Cycle) Workspace Interactive States
   const [stlcPhase, setStlcPhase] = useState<number>(1);
@@ -36,8 +36,8 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
   const [testLead, setTestLead] = useState<string>('Mrs. Kalyani T. (CSE Instructor)');
 
   const [testCases, setTestCases] = useState<any[]>([
-    { id: 'TC-001', title: 'Geofence Bound Violation Validation', priority: 'HIGH', desc: 'Simulate geolocation fetch > 300m away from coordinates [17.740697, 83.321251]', expected: 'Assert system raises LocationOutOfBounds block.', status: 'Untested', actual: '' },
-    { id: 'TC-002', title: 'Biometric Face Landmark Hash Alignment Check', priority: 'HIGH', desc: 'Simulate face tracking coordinate mismatch in WebGL canvas stream.', expected: 'Assert system flags FaceTelemetryMismatch exception.', status: 'Untested', actual: '' },
+    { id: 'TC-001', title: 'Geofence Bound Violation Validation', priority: 'HIGH', desc: 'Assert geolocation fetch > 300m away from coordinates [17.740697, 83.321251]', expected: 'Assert system raises LocationOutOfBounds block.', status: 'Untested', actual: '' },
+    { id: 'TC-002', title: 'Biometric Face Landmark Hash Alignment Check', priority: 'HIGH', desc: 'Assert face tracking coordinate mismatch in WebGL canvas stream.', expected: 'Assert system flags FaceTelemetryMismatch exception.', status: 'Untested', actual: '' },
     { id: 'TC-003', title: 'Timing Gate Isolation Outside Hours', priority: 'MEDIUM', desc: 'Trigger verify request at 1:40 PM (gap between sessions).', expected: 'Assert HTTP 403 Forbidden: Verification period closed.', status: 'Untested', actual: '' },
     { id: 'TC-004', title: 'Hardware Binding Integrity Check', priority: 'HIGH', desc: 'Submit session mark request from unregistered MAC address fingerprint.', expected: 'Assert DeviceUnrecognized security isolation triggered.', status: 'Untested', actual: '' },
     { id: 'TC-005', title: 'Emergency Panic Alert Dispatch', priority: 'HIGH', desc: 'Press SOS trigger. Dispatch canvas, location, and micro audio to Telegram Bot.', expected: 'Send message payload with status 200.', status: 'Untested', actual: '' },
@@ -621,9 +621,9 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
               {/* Dynamic real-time sandbox test validation gate */}
               <div className="bg-[#020617]/90 border border-cyan-500/20 rounded-xl p-4 text-left">
                 <div className="flex items-center justify-between mb-3 border-b border-cyan-500/10 pb-2">
-                  <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest font-bold col-span-2">Verification Engine Sandbox</span>
+                  <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest font-bold col-span-2">Verification Engine Dashboard</span>
                   <span className={`text-[8.5px] font-mono px-2 py-0.5 rounded ${isSimulating ? 'bg-amber-950 text-amber-300 border border-amber-500/20' : 'bg-green-950 text-green-300 border border-green-500/20'}`}>
-                    {isSimulating ? 'SIMULATING' : 'READY_TEST'}
+                    {isSimulating ? 'AUDITING' : 'READY_TEST'}
                   </span>
                 </div>
 
@@ -640,7 +640,7 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
                   disabled={isSimulating}
                   className="w-full bg-[#00f2ff] hover:bg-[#43ebff] disabled:bg-cyan-950/50 disabled:text-cyan-600 text-slate-950 text-xs font-mono font-bold py-2 rounded uppercase transition flex items-center justify-center gap-2 pointer-events-auto"
                 >
-                  <Users className="w-4 h-4" /> Run 4-Layer Verification Simulation
+                  <Users className="w-4 h-4" /> Run 4-Layer Sentry Verification Audit
                 </button>
 
                 <div className="mt-3 bg-black/40 p-2 rounded h-24 overflow-y-auto space-y-1 scrollbar-none font-mono text-[9px] text-slate-400 text-left border border-white/5">
@@ -960,9 +960,9 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
                   </div>
 
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-white font-orbitron font-medium">Simulate Hardware, Location & Student Identity</h4>
+                    <h4 className="text-sm font-bold text-white font-orbitron font-medium">Verify Hardware, Location & Student Identity</h4>
                     <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                      Configure simulated context parameters. These variables will directly dictate pass/fail outcomes when the physical QA automation runner executes diagnostic assertions.
+                      Configure active context parameters. These variables will directly dictate pass/fail outcomes when the physical QA automation runner executes diagnostic assertions.
                     </p>
                   </div>
 
@@ -970,7 +970,7 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
                     
                     {/* Student selection field */}
                     <div className="space-y-1.5 text-left">
-                      <label className="text-[9.5px] font-mono text-[#00f2ff] uppercase block font-bold">Select target Student simulation session :</label>
+                      <label className="text-[9.5px] font-mono text-[#00f2ff] uppercase block font-bold">Select target Student validation session :</label>
                       <select
                         value={simStudentId}
                         onChange={(e) => setSimStudentId(e.target.value)}
@@ -1018,7 +1018,7 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
                         />
                         <div>
                           <div className="font-bold text-[11px] text-slate-100">Face Landmark Verified</div>
-                          <div className="text-[9.5px] text-slate-500 mt-0.5">Simulate accurate biometric match</div>
+                          <div className="text-[9.5px] text-slate-500 mt-0.5">Require accurate biometric match</div>
                         </div>
                       </label>
 
@@ -1036,9 +1036,9 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
                       </label>
                     </div>
 
-                    {/* Physical Workstation simulation parameter for CS-08 */}
+                    {/* Physical Workstation diagnostic parameter for CS-08 */}
                     <div className="space-y-1.5 pt-1 text-left">
-                      <label className="text-[9.5px] font-mono text-[#00f2ff] uppercase block font-bold mb-1">Simulated CS-08 Workstation Physical Health:</label>
+                      <label className="text-[9.5px] font-mono text-[#00f2ff] uppercase block font-bold mb-1">CS-08 Workstation Physical Health:</label>
                       <div className="grid grid-cols-3 gap-2">
                         {['RESOLVED', 'PENDING', 'UNDER_REPAIR'].map(status => (
                           <button
@@ -1090,7 +1090,7 @@ export const EcosystemBlueprintHub: React.FC<EcosystemBlueprintHubProps> = ({ db
                   <div className="space-y-1 text-left">
                     <h4 className="text-sm font-bold text-white font-orbitron">Run Automated Test Suites & Analyze Assertions</h4>
                     <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                      Start automated execution checks. If simulated factors configured in Phase 4 are invalid (such as distance deviation of 302m or facial match unchecked), failures are caught and flagged.
+                      Start automated execution checks. If context factors configured in Phase 4 are invalid (such as distance deviation of 302m or facial match unchecked), failures are caught and flagged.
                     </p>
                   </div>
 

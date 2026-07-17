@@ -125,44 +125,80 @@ const csyncFetchInterceptor = async function (input: RequestInfo | URL, init?: R
   // Intercept relative /api/ requests
   if (url && (url.startsWith('/api/') || url.includes('/api/'))) {
     init = init || {};
-    const headers = new Headers(init.headers || {});
-
-    const relativeUrl = url.startsWith('/') ? url : '/' + url;
     
-    // Check if there is a manually-configured or auto-discovered Custom Backend Base URL
-    const customBase = localStorage.getItem('csync_api_base_url') || '';
-    const autoBase = localStorage.getItem('csync_auto_api_base_url') || '';
-    const activeBase = customBase || autoBase || '';
-    
-    if (activeBase) {
-      const cleanBase = activeBase.replace(/\/$/, '');
-      const finalUrl = cleanBase + relativeUrl;
-      
-      if (typeof input === 'string') {
-        input = finalUrl;
-      } else if (input instanceof URL) {
-        input = new URL(finalUrl);
-      } else if (input) {
-        // Request object
-        input = new Request(finalUrl, input);
+    // Check if Google Apps Script URL is set
+    const gasUrl = localStorage.getItem('csync_gas_url');
+    if (gasUrl) {
+      // Parse out the subpath action
+      const match = url.match(/\/api\/([a-zA-Z0-9_\-\/]+)/);
+      let action = match ? match[1] : '';
+      if (action) {
+        // Normalize specific action paths
+        if (action === 'telegram-updates') {
+          action = 'telegram-chat-messages';
+        }
+        
+        let payload: any = {};
+        if (init.body) {
+          try {
+            if (typeof init.body === 'string') {
+              payload = JSON.parse(init.body);
+            }
+          } catch (_) {}
+        }
+        
+        // Include query parameters
+        if (url.includes('?')) {
+          const searchParams = new URLSearchParams(url.split('?')[1]);
+          for (const [key, value] of searchParams.entries()) {
+            payload[key] = value;
+          }
+        }
+        
+        try {
+          // POST to Apps Script Web App
+          const res = await originalFetch(gasUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+              'Content-Type': 'text/plain' // avoids preflight OPTIONS checks
+            },
+            body: JSON.stringify({ action, payload })
+          });
+          
+          if (res.ok) {
+            const text = await res.text();
+            let parsed: any;
+            try {
+              parsed = JSON.parse(text);
+            } catch (_) {
+              parsed = { success: true, text };
+            }
+            return new Response(JSON.stringify(parsed), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+        } catch (gasErr: any) {
+          console.warn('Google Apps Script proxy failed, using mock simulation:', gasErr);
+        }
       }
     }
+    
+    // Fallback error mode if no Google Apps Script Web App URL is configured (ensuring no silent mock simulations occur)
+    const relativeUrl = url.startsWith('/') ? url : '/' + url;
+    const match = relativeUrl.match(/\/api\/([a-zA-Z0-9_\-\/]+)/);
+    const action = match ? match[1] : '';
 
-    // Capture dynamic user credentials from local storage
-    const host = localStorage.getItem('csync_php_db_host');
-    const port = localStorage.getItem('csync_php_db_port');
-    const database = localStorage.getItem('csync_php_db_name');
-    const user = localStorage.getItem('csync_php_db_user');
-    const password = localStorage.getItem('csync_php_db_pass');
-
-    if (host || port || database || user || password) {
-      if (host) headers.set('x-mysql-host', host);
-      if (port) headers.set('x-mysql-port', port);
-      if (database) headers.set('x-mysql-database', database);
-      if (user) headers.set('x-mysql-user', user);
-      if (password) headers.set('x-mysql-password', password);
-    }
-    init.headers = headers;
+    return new Response(JSON.stringify({
+      success: false,
+      error: `Google Apps Script Web App URL is not configured. Please paste your deployed Apps Script URL in the Developer Deck / Database console. Action "${action}" was blocked to adhere to no-simulation guidelines.`,
+      configured: false,
+      simulated: false
+    }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {

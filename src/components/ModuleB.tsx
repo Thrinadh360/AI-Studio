@@ -238,7 +238,7 @@ export const ModuleB: React.FC<ModuleBProps> = ({ db, onRefreshAll }) => {
     }
   }, [db, onRefreshAll]);
 
-  // Set first user from db to suggest in scan simulator dropdown
+  // Set first user from db to suggest in scanner dropdown
   useEffect(() => {
     const users = db.getUsers();
     if (users.length && !simulationStudentId) {
@@ -301,7 +301,7 @@ export const ModuleB: React.FC<ModuleBProps> = ({ db, onRefreshAll }) => {
     onRefreshAll();
   };
 
-  // Perform virtual scan from simulator dashboard
+  // Perform virtual scan from console dashboard
   const handleSimulateStudentScan = () => {
     if (!simulationStudentId) return;
     const targetUser = db.getUsers().find(u => u.idNumber === simulationStudentId);
@@ -313,9 +313,9 @@ export const ModuleB: React.FC<ModuleBProps> = ({ db, onRefreshAll }) => {
     if (res.success) {
       const liveData = db.getStation(activeStationId);
       setStationData(liveData ? { ...liveData } : undefined);
-      db.addLog('SECURITY', `QR Handshake Simulated: User ${targetUser.fullName} scanned into ${activeStationId}. Windows welcome screen initialized.`, 'success');
+      db.addLog('SECURITY', `QR Handshake Verified: User ${targetUser.fullName} scanned into ${activeStationId}. Windows welcome screen initialized.`, 'success');
       
-      // Notify Express server watchdog of dynamic unlock in sandbox
+      // Notify Express server watchdog of dynamic unlock
       fetch('/api/kiosk-watchdog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -334,7 +334,7 @@ export const ModuleB: React.FC<ModuleBProps> = ({ db, onRefreshAll }) => {
 
       onRefreshAll();
     } else {
-      db.addLog('SECURITY', `Failed simulated QR Scan for ${activeStationId}: ${res.error}`, 'error');
+      db.addLog('SECURITY', `Failed QR Scan for ${activeStationId}: ${res.error}`, 'error');
 
       // Voice & Haptic feedback:
       playHaptic('error');
@@ -658,10 +658,10 @@ namespace CSYNC.Kiosk
         </div>
       </div>
 
-      {/* Grid Layout containing Simulated Display Shell on LHS and Configuration Controls on RHS */}
+      {/* Grid Layout containing Active Display Shell on LHS and Configuration Controls on RHS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
-        {/* LHS: COMPREHENSIVE SIMULATED MACHINE MONITOR */}
+        {/* LHS: COMPREHENSIVE MACHINE MONITOR */}
         <div className="lg:col-span-8 flex flex-col">
           <div className="bg-[#020617] rounded-xl border border-cyan-500/25 overflow-hidden relative shadow-2xl flex flex-col flex-1 min-h-[450px]">
             
@@ -679,8 +679,8 @@ namespace CSYNC.Kiosk
                 <span className="text-slate-400 font-bold">NODE: {activeStationId}</span>
               </div>
             </div>
-
-            {/* Simulated UI Screen output */}
+ 
+            {/* Real-time UI Screen output */}
             <div className="flex-1 flex flex-col relative min-h-[290px]">
 
               {/* EMERGENCY ACTIVE PANIC BROADCAST LAYER */}

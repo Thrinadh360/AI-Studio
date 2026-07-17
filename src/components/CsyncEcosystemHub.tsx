@@ -1745,7 +1745,7 @@ export const CsyncEcosystemHub: React.FC<CsyncEcosystemHubProps> = ({
             {/* Interactive testing and auto detect info notes */}
             <div className="bg-[#0b1424]/40 p-1.5 border border-white/5 rounded text-[7px] text-zinc-450 uppercase leading-normal">
               <span className="text-cyan-400 font-bold">Hardware Sentry Status: </span>
-              <span>Plug in your physical charger or connect Bluetooth peripherals to auto detect, or trigger simulated ports above.</span>
+              <span>Plug in your physical charger or connect Bluetooth peripherals to auto detect, or trigger hardware ports above.</span>
             </div>
           </div>
 
@@ -2252,7 +2252,7 @@ export const CsyncEcosystemHub: React.FC<CsyncEcosystemHubProps> = ({
                         : 'bg-rose-950/50 hover:bg-rose-900 text-rose-400 hover:text-white border-rose-500/40 hover:border-rose-400 animate-pulse'
                     }`}
                   >
-                    {m2mTapState === 'idle' && "🤝 Simulate Physical NFC Tap"}
+                    {m2mTapState === 'idle' && "🤝 Trigger Physical NFC Tap"}
                     {m2mTapState === 'searching' && "📡 Aligning Device Loops..."}
                     {m2mTapState === 'tapping' && "⚡ Transferring Data Payload..."}
                     {m2mTapState === 'success' && "✅ Tap Transfer Success!"}

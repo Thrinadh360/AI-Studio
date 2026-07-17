@@ -1,4 +1,4 @@
-import { User, Station, AttendanceLog, SyncFile, SystemLog, StationStatus, MaintenanceActivity, StationIssue, CampusHoliday, PanicAlert, SuccessionRecord, Department, LicenseConfig, DeviceChangeRequest, LeaveRequest, AppNotification, MorningBrief, WeatherInfo, LiveClassSession, WhiteboardStroke, ChatThread, ChatMessage, UserStory, CsyncApiProject, JobOpportunity, JobApplication, BankTransaction, AccountClosureRequest, FundraiserCampaign, FundraiserContribution, Role } from './types';
+import { User, Station, AttendanceLog, SyncFile, SystemLog, StationStatus, MaintenanceActivity, StationIssue, CampusHoliday, PanicAlert, SuccessionRecord, Department, LicenseConfig, DeviceChangeRequest, LeaveRequest, AppNotification, MorningBrief, WeatherInfo, LiveClassSession, WhiteboardStroke, ChatThread, ChatMessage, UserStory, CsyncApiProject, JobOpportunity, JobApplication, BankTransaction, AccountClosureRequest, FundraiserCampaign, FundraiserContribution, Role, DiscussionTopic, DiscussionComment } from './types';
 import { censorText } from './profanityFilter';
 
 let sessionHardwareMac = '';
@@ -49,6 +49,41 @@ export class ClientDatabase {
   private lastKnownState: any = {};
   private stationDevice: any = null;
   private liveClasses: LiveClassSession[] = [];
+  private notifications: AppNotification[] = [];
+  private discussionTopics: DiscussionTopic[] = [
+    {
+      id: 'dt-001',
+      title: 'Lab B Workstation Allocation & Sentry Integration Protocols',
+      description: 'Reviewing MAC registration and geofence multipliers for secure attendance links in CSE Lab-B workstations.',
+      category: 'ANNOUNCEMENT',
+      initiatedById: 101,
+      initiatedByName: 'Dr. A. Siva Prasad',
+      initiatedByRole: 'HOD',
+      createdAt: '2026-07-15 09:30 AM',
+      comments: [
+        {
+          id: 'cmt-001',
+          authorId: 102,
+          authorName: 'Mrs. Kalyani T.',
+          authorRole: 'Staff',
+          text: 'We should ensure all students verify their physical proximity via the companion NFC app before logging in.',
+          timestamp: '2026-07-15 10:15 AM',
+          likes: 4
+        }
+      ]
+    },
+    {
+      id: 'dt-002',
+      title: 'Major Research Project: Autonomous Drone Geofencing on Coastline Nodes',
+      description: 'Collaborative development of sovereign telemetry loops and adaptive drone geofencing for coastline security checks.',
+      category: 'RESEARCH',
+      initiatedById: 102,
+      initiatedByName: 'Mrs. Kalyani T.',
+      initiatedByRole: 'Staff',
+      createdAt: '2026-07-14 11:20 AM',
+      comments: []
+    }
+  ];
 
   private morningBrief: MorningBrief = {
     id: 'brief-today',
@@ -108,13 +143,46 @@ export class ClientDatabase {
     this.syncWithServer().catch(() => {});
   }
 
+  getGoogleAppsScriptUrl(): string {
+    return localStorage.getItem('csync_gas_url') || '';
+  }
+
+  setGoogleAppsScriptUrl(url: string) {
+    localStorage.setItem('csync_gas_url', url.trim());
+    this.addLog('SYSTEM', `Google Apps Script backend URL bound: ${url.trim()}`, 'success');
+  }
+
+  async fetchGas(action: string, payload: any = {}): Promise<any> {
+    const gasUrl = this.getGoogleAppsScriptUrl();
+    if (!gasUrl) {
+      throw new Error("Google Apps Script backend is not configured yet. Set it in the Developer Deck console.");
+    }
+    // We send standard post bodies to avoid pre-flight OPTIONS request issues on custom headers.
+    // Standard Apps Script allows parsing direct text-body JSONs elegantly.
+    const url = `${gasUrl}${gasUrl.includes('?') ? '&' : '?'}action=${encodeURIComponent(action)}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      body: JSON.stringify({ ...payload, action })
+    });
+    if (!response.ok) {
+      throw new Error(`Google Apps Script API responded with status code ${response.status}`);
+    }
+    const data = await response.json();
+    if (data && data.success === false) {
+      throw new Error(data.error || "Action execution failed on Apps Script Web App.");
+    }
+    return data;
+  }
+
   async syncWithServer() {
     if (this.writeInProgress) return;
     try {
-      const response = await fetch('/api/ecosystem-state');
-      if (response.ok) {
-        const state = await response.json();
-        if (state && typeof state === 'object') {
+      const gasUrl = this.getGoogleAppsScriptUrl();
+      if (gasUrl) {
+        const data = await this.fetchGas('getEcosystemState');
+        if (data && data.state) {
+          const state = data.state;
           if (state.users) this.users = state.users;
           if (state.stations) this.stations = state.stations;
           if (state.files) this.files = state.files;
@@ -122,24 +190,21 @@ export class ClientDatabase {
           if (state.attendanceLogs) this.attendanceLogs = state.attendanceLogs;
           if (state.issues) this.issues = state.issues;
           if (state.maintenance) this.maintenance = state.maintenance;
-          if (state.deviceChangeRequests) this.deviceChangeRequests = state.deviceChangeRequests;
           if (state.leaveRequests) this.leaveRequests = state.leaveRequests;
           if (state.jobOpportunities) this.jobOpportunities = state.jobOpportunities;
           if (state.jobApplications) this.jobApplications = state.jobApplications;
-          if (state.chatThreads) this.chatThreads = state.chatThreads;
-          if (state.chatMessages) this.chatMessages = state.chatMessages;
           if (state.bankTransactions) this.bankTransactions = state.bankTransactions;
-          if (state.accountClosureRequests) this.accountClosureRequests = state.accountClosureRequests;
           if (state.fundraiserCampaigns) this.fundraiserCampaigns = state.fundraiserCampaigns;
           if (state.fundraiserContributions) this.fundraiserContributions = state.fundraiserContributions;
-          if (state.motherUpi) this.motherUpi = state.motherUpi;
-          if (state.gatewayAutoApprove !== undefined) this.gatewayAutoApprove = state.gatewayAutoApprove;
-          if (state.deployedModules) this.deployedModules = state.deployedModules;
+          if (state.holidays) this.holidays = state.holidays;
+          if (state.discussionTopics) this.discussionTopics = state.discussionTopics;
           this.updateLastKnownState();
         }
+      } else {
+        // Safe offline simulated sync placeholder (already in memory state)
       }
-    } catch (err) {
-      console.warn("CSync online sync delayed:", err);
+    } catch (err: any) {
+      console.warn("CSync Apps Script synchronization deferred:", err.message);
     }
   }
 
@@ -152,7 +217,8 @@ export class ClientDatabase {
       chatThreads: this.chatThreads, chatMessages: this.chatMessages, bankTransactions: this.bankTransactions,
       accountClosureRequests: this.accountClosureRequests, fundraiserCampaigns: this.fundraiserCampaigns,
       fundraiserContributions: this.fundraiserContributions, motherUpi: this.motherUpi,
-      gatewayAutoApprove: this.gatewayAutoApprove, deployedModules: this.deployedModules
+      gatewayAutoApprove: this.gatewayAutoApprove, deployedModules: this.deployedModules,
+      holidays: this.holidays, discussionTopics: this.discussionTopics
     }));
   }
 
@@ -160,7 +226,7 @@ export class ClientDatabase {
     if (this.writeInProgress) return;
     this.writeInProgress = true;
     try {
-      const payload = {
+      const payloadState = {
         users: this.users, stations: this.stations, files: this.files, systemLogs: this.systemLogs,
         attendanceLogs: this.attendanceLogs, issues: this.issues, maintenance: this.maintenance,
         deviceChangeRequests: this.deviceChangeRequests, leaveRequests: this.leaveRequests,
@@ -168,18 +234,17 @@ export class ClientDatabase {
         chatThreads: this.chatThreads, chatMessages: this.chatMessages, bankTransactions: this.bankTransactions,
         accountClosureRequests: this.accountClosureRequests, fundraiserCampaigns: this.fundraiserCampaigns,
         fundraiserContributions: this.fundraiserContributions, motherUpi: this.motherUpi,
-        gatewayAutoApprove: this.gatewayAutoApprove, deployedModules: this.deployedModules
+        gatewayAutoApprove: this.gatewayAutoApprove, deployedModules: this.deployedModules,
+        holidays: this.holidays, discussionTopics: this.discussionTopics
       };
-      const response = await fetch('/api/ecosystem-state', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (response.ok) {
-        this.updateLastKnownState();
+      
+      const gasUrl = this.getGoogleAppsScriptUrl();
+      if (gasUrl) {
+        await this.fetchGas('postEcosystemState', { state: payloadState });
       }
-    } catch (err) {
-      console.warn("CSync state persist failed:", err);
+      this.updateLastKnownState();
+    } catch (err: any) {
+      console.warn("CSync Google Apps Script state sync deferred:", err.message);
     } finally {
       this.writeInProgress = false;
     }
@@ -187,6 +252,85 @@ export class ClientDatabase {
 
   reloadFromLocalStorage() {}
   persistStateOnlyLocal() {}
+
+  getDiscussionTopics(): DiscussionTopic[] {
+    return this.discussionTopics || [];
+  }
+
+  addDiscussionTopic(
+    title: string,
+    description: string,
+    category: 'SYLLABUS' | 'ASSIGNMENT' | 'ANNOUNCEMENT' | 'GENERAL' | 'RESEARCH',
+    initiatedById: number
+  ): DiscussionTopic | null {
+    const creator = this.users.find(u => u.id === initiatedById);
+    if (!creator) return null;
+
+    const newTopic: DiscussionTopic = {
+      id: `dt-${Date.now()}`,
+      title: censorText(title).filteredText,
+      description: censorText(description).filteredText,
+      category,
+      initiatedById,
+      initiatedByName: creator.fullName,
+      initiatedByRole: creator.role,
+      initiatedByPhoto: creator.photoBlob,
+      createdAt: new Date().toLocaleString(),
+      comments: []
+    };
+
+    if (!this.discussionTopics) {
+      this.discussionTopics = [];
+    }
+    this.discussionTopics.unshift(newTopic);
+    this.persistState();
+    return newTopic;
+  }
+
+  addDiscussionComment(
+    topicId: string,
+    text: string,
+    authorId: number,
+    replyToCommentId?: string
+  ): DiscussionComment | null {
+    const author = this.users.find(u => u.id === authorId);
+    if (!author) return null;
+
+    if (!this.discussionTopics) {
+      this.discussionTopics = [];
+    }
+    const topic = this.discussionTopics.find(t => t.id === topicId);
+    if (!topic) return null;
+
+    const newComment: DiscussionComment = {
+      id: `cmt-${Date.now()}`,
+      authorId,
+      authorName: author.fullName,
+      authorRole: author.role,
+      authorPhoto: author.photoBlob,
+      text: censorText(text).filteredText,
+      timestamp: new Date().toLocaleString(),
+      replyToCommentId,
+      likes: 0
+    };
+
+    topic.comments.push(newComment);
+    this.persistState();
+    return newComment;
+  }
+
+  likeDiscussionComment(topicId: string, commentId: string): boolean {
+    if (!this.discussionTopics) return false;
+    const topic = this.discussionTopics.find(t => t.id === topicId);
+    if (!topic) return false;
+
+    const comment = topic.comments.find(c => c.id === commentId);
+    if (!comment) return false;
+
+    comment.likes = (comment.likes || 0) + 1;
+    this.persistState();
+    return true;
+  }
 
   getUsers() { return this.users; }
   getCurrentStudent() { return this.currentStudentUser; }
@@ -219,6 +363,71 @@ export class ClientDatabase {
   getDeployedModules() { return this.deployedModules; }
   setDeployedModules(modules: any[]) {
     this.deployedModules = modules;
+    this.persistState();
+  }
+
+  getNotifications(): AppNotification[] {
+    if (!this.notifications || this.notifications.length === 0) {
+      const stored = localStorage.getItem('csync_notifications');
+      if (stored) {
+        try {
+          this.notifications = JSON.parse(stored);
+        } catch (_) {
+          this.notifications = [];
+        }
+      }
+    }
+    return this.notifications;
+  }
+
+  addNotification(title: string, message: string, type: 'news' | 'weather' | 'system' | 'alert', avatar?: string) {
+    const notifications = this.getNotifications();
+    const newNotif: AppNotification = {
+      id: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      title,
+      message,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', Today',
+      type,
+      read: false,
+      avatar
+    };
+    notifications.unshift(newNotif);
+    localStorage.setItem('csync_notifications', JSON.stringify(notifications));
+    this.addLog('SYSTEM', `Notification published: [${title}] ${message}`, type === 'alert' ? 'warning' : 'info');
+    this.persistState();
+  }
+
+  clearNotifications() {
+    this.notifications = [];
+    localStorage.setItem('csync_notifications', JSON.stringify([]));
+    this.persistState();
+  }
+
+  markNotificationsAsRead() {
+    const notifications = this.getNotifications();
+    notifications.forEach(n => n.read = true);
+    localStorage.setItem('csync_notifications', JSON.stringify(notifications));
+    this.persistState();
+  }
+
+  getHolidays() {
+    return this.holidays || [];
+  }
+
+  addHoliday(name: string, date: string) {
+    if (!this.holidays) this.holidays = [];
+    const newId = Math.max(0, ...this.holidays.map(h => h.id)) + 1;
+    this.holidays.push({
+      id: newId,
+      name,
+      date
+    });
+    this.persistState();
+  }
+
+  removeHoliday(id: number) {
+    if (!this.holidays) return;
+    this.holidays = this.holidays.filter(h => h.id !== id);
     this.persistState();
   }
 
@@ -342,40 +551,66 @@ export class ClientDatabase {
   }
 
   recordAttendanceSession(
-    userId: number, stationId: string, macAddress: string, gpsSimMeters: number,
-    targetCampusId: string, fingerprintStatus: 'MATCHED' | 'MISMATCH' | 'NOT_ENROLLED'
-  ): { success: boolean; message: string; data?: AttendanceLog } {
+    userId: number, stationId?: string, macAddress?: string, gpsSimMeters?: any,
+    targetCampusId?: string, fingerprintStatus?: any
+  ): { success: boolean; message: string; data?: AttendanceLog; xpGained?: number; levelUp?: boolean } {
     const u = this.users.find(usr => usr.id === userId);
     if (!u) return { success: false, message: 'User profile not found.' };
     const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     const dateStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-    const st = this.stations.find(s => s.stationId === stationId);
+    
+    const activeStationId = stationId || 'CS-01';
+    const st = this.stations.find(s => s.stationId === activeStationId);
     if (st) {
       st.status = 'UNLOCKED';
       st.activeUserId = u.id;
       st.lastHeartbeat = new Date().toISOString();
     }
+
+    let finalGpsMeters = 1.5;
+    if (typeof gpsSimMeters === 'number') {
+      finalGpsMeters = gpsSimMeters;
+    } else if (typeof gpsSimMeters === 'string') {
+      const parsed = parseFloat(gpsSimMeters);
+      if (!isNaN(parsed)) {
+        finalGpsMeters = parsed;
+      }
+    }
+
+    const campusId = targetCampusId || 'Maddilapalem Campus';
+
     const newLog: AttendanceLog = {
       id: Date.now(),
       userId,
       userName: u.fullName,
       eventType: 'ATTENDANCE',
-      stationId,
-      gpsCoords: `${gpsSimMeters.toFixed(1)}m from ${targetCampusId}`,
+      stationId: activeStationId,
+      gpsCoords: `${finalGpsMeters.toFixed(1)}m from ${campusId}`,
       timestamp: `${dateStr} ${timeStr}`
     };
     this.attendanceLogs.unshift(newLog);
+    
+    const oldLevel = Math.floor((u.xp || 0) / 200) + 1;
     u.streak = (u.streak || 0) + 1;
     u.xp = (u.xp || 0) + 50;
-    u.level = Math.floor(u.xp / 200) + 1;
+    const newLevel = Math.floor(u.xp / 200) + 1;
+    const levelUp = newLevel > oldLevel;
+    u.level = newLevel;
+    
     u.attendanceEnergy = Math.min(100, (u.attendanceEnergy || 100) + 8);
     u.campusPresenceScore = Math.min(100, (u.campusPresenceScore || 100) + 4);
     if (u.streak >= 15) u.streakTier = 'CAMPUS ELITE';
     else if (u.streak >= 10) u.streakTier = 'SENIOR SENTRY';
     else if (u.streak >= 5) u.streakTier = 'REGULAR';
-    this.addLog('SYSTEM', `${u.fullName} recorded attendance successfully at ${stationId}.`, 'success');
+    this.addLog('SYSTEM', `${u.fullName} recorded attendance successfully at ${activeStationId}.`, 'success');
     this.persistState();
-    return { success: true, message: `Attendance verified successfully. Welcome, ${u.fullName}!`, data: newLog };
+    return { 
+      success: true, 
+      message: `Attendance verified successfully. Welcome, ${u.fullName}!`, 
+      data: newLog,
+      xpGained: 50,
+      levelUp
+    };
   }
 
   approveLeavePreserveStreak(userId: number, dateStr: string) {
@@ -1309,11 +1544,61 @@ export class ClientDatabase {
     this.issues = []; this.maintenance = []; this.deviceChangeRequests = []; this.leaveRequests = [];
     this.jobOpportunities = []; this.jobApplications = []; this.chatThreads = []; this.chatMessages = [];
     this.bankTransactions = []; this.accountClosureRequests = []; this.fundraiserCampaigns = []; this.fundraiserContributions = [];
+    this.discussionTopics = [];
     this.persistState();
   }
 
   executeSQLQuery(sql: string): { status: 'success' | 'error'; header: string[]; rows: any[][]; message: string } {
     this.addLog('SECURITY', `Developer executed raw SQL sandbox trace: ${sql.substring(0, 40)}...`, 'warning');
     return { status: 'success', header: ['Status', 'Info'], rows: [['Active', 'SQL simulation trace passed']], message: 'Query executed successfully over sandbox environment' };
+  }
+
+  async sendTelegramOtp(chatId: string, otp: string, phoneNumber: string): Promise<any> {
+    const gasUrl = this.getGoogleAppsScriptUrl();
+    if (gasUrl) {
+      return this.fetchGas('telegram-send-otp', {
+        contact: chatId,
+        chatId: chatId,
+        text: `Your C-Sync secure MFA verification code is: ${otp}`
+      });
+    } else {
+      throw new Error("Google Apps Script Web App is not configured. Please paste your deployed Web App URL in the Developer Console / Database Settings to enable real Telegram OTP verification.");
+    }
+  }
+
+  async fetchTelegramUpdates(): Promise<any> {
+    const gasUrl = this.getGoogleAppsScriptUrl();
+    if (gasUrl) {
+      return this.fetchGas('telegram-chat-messages');
+    } else {
+      throw new Error("Google Apps Script Web App is not configured. Cannot poll for live Telegram updates.");
+    }
+  }
+
+  async sendTelegramChatMessage(chatId: string, text: string): Promise<any> {
+    const gasUrl = this.getGoogleAppsScriptUrl();
+    if (gasUrl) {
+      return this.fetchGas('telegram-chat-send', { chatId, text });
+    } else {
+      throw new Error("Google Apps Script Web App is not configured. Cannot transmit real-time Telegram messages.");
+    }
+  }
+
+  async generateGroqContent(prompt: string): Promise<any> {
+    const gasUrl = this.getGoogleAppsScriptUrl();
+    if (gasUrl) {
+      return this.fetchGas('groq-generate', { prompt });
+    } else {
+      throw new Error("Google Apps Script Web App is not configured. AI transcription is disabled.");
+    }
+  }
+
+  async generateGeminiEmail(prompt: string): Promise<any> {
+    const gasUrl = this.getGoogleAppsScriptUrl();
+    if (gasUrl) {
+      return this.fetchGas('gemini-synthesize', { prompt });
+    } else {
+      throw new Error("Google Apps Script Web App is not configured. Gemini email generation is disabled.");
+    }
   }
 }

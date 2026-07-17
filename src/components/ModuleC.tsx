@@ -1391,21 +1391,22 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
       }
 
       // 2. Geofence bounds limit check (Concurrent multi-zone cross-validation)
+      const safeGpsMeters = gpsSimMeters ?? 0;
       const zoneStats = availableCampuses.map(campus => {
-        const simulatedDist = campus.id === targetCampus.id ? gpsSimMeters : (gpsSimMeters * 3.5 + 45.0);
-        return `${campus.name}: ${simulatedDist.toFixed(1)}m`;
+        const simulatedDist = campus.id === targetCampus.id ? safeGpsMeters : (safeGpsMeters * 3.5 + 45.0);
+        return `${campus.name}: ${(simulatedDist ?? 0).toFixed(1)}m`;
       }).join(', ');
       
       db.addLog('SECURITY', `Multi-zone geofence cross-validation trace: [${zoneStats}]. Checking bounds for all 3 nodes concurrently.`, 'info');
 
       const activeRadiusLimit = targetCampus.radiusLimit || 150.0;
-      if (gpsSimMeters > activeRadiusLimit && !isUserAdmin) {
+      if (safeGpsMeters > activeRadiusLimit && !isUserAdmin) {
         setFaceAttendanceResult({
           success: false,
           message: `GEOFENCE ERROR: Attendance rejected. You are physically out of bounds of all 3 authorized college nodes (college, Satellite Hub, Trusted Node). Biometric validation at ${targetCampus.name} is restricted to within ${activeRadiusLimit.toFixed(1)} meters range.`
         });
         setIsFaceAttendanceScanning(false);
-        db.addLog('SECURITY', `Biometric guard bypass blocked: user ${activeStudent.fullName} failed multi-zone geofencing validation. Outside bounds of all 3 authorized nodes (Current selected: ${targetCampus.name}, dist: ${gpsSimMeters.toFixed(1)}m, limit: ${activeRadiusLimit.toFixed(1)}m).`, 'warning');
+        db.addLog('SECURITY', `Biometric guard bypass blocked: user ${activeStudent.fullName} failed multi-zone geofencing validation. Outside bounds of all 3 authorized nodes (Current selected: ${targetCampus.name}, dist: ${safeGpsMeters.toFixed(1)}m, limit: ${activeRadiusLimit.toFixed(1)}m).`, 'warning');
         if (window.speechSynthesis) {
           try {
             window.speechSynthesis.cancel();
@@ -1593,7 +1594,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
     
     if (activeStation && gpsSimMeters > activeRadiusLimit && !isUserAdmin) {
       setWatchdogLogs(prev => [`[WARNING] Geofence Trigger: Out of bounds (${gpsSimMeters}m, limit: ${activeRadiusLimit}m). Initiating forced lock...`, ...prev]);
-      const success = db.lockStationByWatchdog(activeStation.stationId, activeStudent.idNumber, `${gpsSimMeters.toFixed(1)}m Proximity Watchdog distance breach`);
+      const success = db.lockStationByWatchdog(activeStation.stationId, activeStudent.idNumber, `${(gpsSimMeters ?? 0).toFixed(1)}m Proximity Watchdog distance breach`);
       if (success) {
         db.addLog('SECURITY', `Watchdog telemetry check failed: Device proximity limit exceeded for user ${activeStudent.fullName}. Locked ${activeStation.stationId}.`, 'warning');
         onRefreshAll();
@@ -2203,7 +2204,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
     }
 
     const logsList = [
-      `[Biometrics] Syncing current GPS physical proximity to geofence: Approved (${gpsSimMeters.toFixed(2)}m deviation).`,
+      `[Biometrics] Syncing current GPS physical proximity to geofence: Approved (${(gpsSimMeters ?? 0).toFixed(2)}m deviation).`,
       `[ECG] Recording average heart rate of 72 BPM. Alpha-band EEG frequency locked at 10.2 Hz.`,
       `[Ecosystem] Hardware binding confirmed on terminal. Zero local packet anomalies reported by IDS.`,
       `[Reputation] Local gamified rating: Level 4 - Streak reputation index steady.`,
@@ -4802,16 +4803,16 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
                         <div className="space-y-1 bg-black/45 p-2 rounded border border-cyan-500/15 text-left text-[8px] font-mono">
                           <div className="flex justify-between">
                             <span className="text-slate-400">Current latitude:</span>
-                            <span className="text-[#00f2ff] font-bold">{realLatitude !== null ? realLatitude.toFixed(6) : 'Awaiting sensor...'}</span>
+                            <span className="text-[#00f2ff] font-bold">{(realLatitude !== null && realLatitude !== undefined) ? realLatitude.toFixed(6) : 'Awaiting sensor...'}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-slate-400">Current longitude:</span>
-                            <span className="text-[#00f2ff] font-bold">{realLongitude !== null ? realLongitude.toFixed(6) : 'Awaiting sensor...'}</span>
+                            <span className="text-[#00f2ff] font-bold">{(realLongitude !== null && realLongitude !== undefined) ? realLongitude.toFixed(6) : 'Awaiting sensor...'}</span>
                           </div>
                           <div className="flex justify-between border-t border-white/5 pt-1 mt-1 text-[9px]">
                             <span className="text-slate-400">Distance to Campus:</span>
                             <span className={`font-bold ${gpsSimMeters <= activeRadiusLimit || isUserAdmin ? 'text-green-400' : 'text-rose-400 animate-pulse'}`}>
-                              {gpsSimMeters > 1000 ? `${(gpsSimMeters / 1000).toFixed(2)} km` : `${gpsSimMeters.toFixed(1)} meters`}
+                              {(gpsSimMeters !== null && gpsSimMeters !== undefined) ? (gpsSimMeters > 1000 ? `${(gpsSimMeters / 1000).toFixed(2)} km` : `${gpsSimMeters.toFixed(1)} meters`) : 'Calculating...'}
                             </span>
                           </div>
                           {gpsSimMeters > activeRadiusLimit && !isUserAdmin && (
@@ -4832,7 +4833,7 @@ export const ModuleC: React.FC<ModuleCProps> = ({ db, onRefreshAll }) => {
                         <div className="bg-black/25 p-1.5 rounded text-[8.5px] font-mono text-center text-slate-300 space-y-0.5">
                           <span className="text-green-400 font-bold block">✓ Workspace Geofence Alignment Calibrated (1.5m)</span>
                           <span className="block text-[7.5px] text-slate-500 leading-snug">
-                            Virtual positioning active. Secure bypass approved for sandbox demonstration.
+                            Virtual positioning active. Secure bypass approved for remote testing.
                           </span>
                         </div>
                       )}

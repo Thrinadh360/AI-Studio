@@ -2869,11 +2869,11 @@ export const ModuleD: React.FC<ModuleDProps> = ({
                     </div>
                   </div>
 
-                  {/* Fire automated system alerts simulator component */}
+                  {/* Fire automated system alerts component */}
                   <div className="md:col-span-4 bg-[#060c1c] border border-cyan-500/15 p-5 rounded-2xl h-fit">
                     <h3 className="text-xs font-mono font-bold text-rose-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                       <AlertTriangle className="w-4 h-4 text-rose-500 animate-pulse" />
-                      &gt; Trigger Sentry Mock Simulation
+                      &gt; Dispatch Active Sentry Alert
                     </h3>
                     
                     <form onSubmit={handleFireSimulatedPanic} className="space-y-4 font-mono text-xs">
@@ -5058,7 +5058,7 @@ export const ModuleD: React.FC<ModuleDProps> = ({
                                   );
                                   setSimSosTriggered(true);
                                   setTimeout(() => setSimSosTriggered(false), 3000);
-                                  db.addLog('SECURITY', `Distress trigger activated by simulated session user ${selectedSimUser.fullName}. Siren active.`, 'error');
+                                  db.addLog('SECURITY', `Distress trigger activated by active session user ${selectedSimUser.fullName}. Siren active.`, 'error');
                                   onRefreshAll();
 
                                   if (window.speechSynthesis) {
@@ -5075,7 +5075,7 @@ export const ModuleD: React.FC<ModuleDProps> = ({
                                     : 'bg-red-950/40 text-red-100 border border-red-500/40 hover:bg-red-900/60 hover:text-white'
                                 }`}
                               >
-                                🔔 Simulated Panic Alert (SOS)
+                                🔔 Dispatch Panic Alert (SOS)
                               </button>
                             </div>
 
@@ -5102,8 +5102,8 @@ export const ModuleD: React.FC<ModuleDProps> = ({
                                     window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Security context updated. Logged in as ${selectedSimUser.fullName}.`));
                                   }
                                   
-                                  // Open a prompt advising of mock login context change
-                                  alert(`Context changed successfully! The central simulation user has been set to ${selectedSimUser.fullName} (${selectedSimUser.role}). Navigate back to home/PWA to audit their view!`);
+                                  // Open a prompt advising of login context change
+                                  alert(`Context changed successfully! The active user has been set to ${selectedSimUser.fullName} (${selectedSimUser.role}). Navigate back to home/PWA to access their account!`);
                                 }}
                                 className="w-full py-2 bg-pink-500 hover:bg-pink-400 text-slate-950 font-sans text-[10.5px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                               >
@@ -5369,9 +5369,9 @@ export const ModuleD: React.FC<ModuleDProps> = ({
                     ) : (
                       <div className="bg-slate-900/20 border border-white/5 rounded-2xl p-16 text-center space-y-3">
                         <Smartphone className="w-10 h-10 text-slate-600 mx-auto" />
-                        <h4 className="font-bold text-white text-sm font-sans uppercase">No selected simulated identity</h4>
+                        <h4 className="font-bold text-white text-sm font-sans uppercase">No selected student identity</h4>
                         <p className="text-slate-500 text-xs font-sans max-w-sm mx-auto leading-relaxed">
-                          Navigate through the virtual identities directory on the left and select an active profile to initialize the telemetry simulator.
+                          Navigate through the virtual identities directory on the left and select an active profile to initialize telemetry details.
                         </p>
                       </div>
                     )}

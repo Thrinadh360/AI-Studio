@@ -14,7 +14,7 @@ interface AdminOtpWidgetProps {
 
 export function AdminOtpWidget({ onSuccess, db, chatIdDefault = '5514363510' }: AdminOtpWidgetProps) {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [chatId, setChatId] = useState(chatIdDefault);
+  const [chatId, setChatId] = useState(() => localStorage.getItem('csync_telegram_chat_id') || chatIdDefault);
   const [isSending, setIsSending] = useState(false);
   const [dispatchedOtp, setDispatchedOtp] = useState<string | null>(null);
   const [enteredOtp, setEnteredOtp] = useState('');
@@ -55,65 +55,21 @@ export function AdminOtpWidget({ onSuccess, db, chatIdDefault = '5514363510' }: 
     setIsSending(true);
     // Generate a 6-digit random code
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Check if the phone number has a Telegram account (in our college ecosystem, only the developer 8500394696 has real Telegram chat integrations)
-    const hasTelegram = cleanPhone === '8500394696';
-    
-    if (!hasTelegram) {
-      setTimeout(() => {
-        setDispatchedOtp(otpCode);
-        // Save to active localStorage route for the companion dashboard
-        localStorage.setItem('csync_pwa_dashboard_otp_' + cleanPhone, JSON.stringify({
-          otp: otpCode,
-          name: matchedStaff.fullName,
-          timestamp: Date.now()
-        }));
-        
-        // Dispatch custom event to trigger instantaneous rendering across open browser tabs/windows
-        window.dispatchEvent(new Event('storage'));
-        
-        db.addLog('SECURITY', `MFA OTP generated and routed directly to ${matchedStaff.fullName}'s C-Sync Companion PWA Dashboard alert (no Telegram account registered).`, 'info');
-        
-        setMessage(`📡 PWA COMPANION ROUTED: No Telegram account detected for ${matchedStaff.fullName}. [SANDBOX OTP: ${otpCode}] was dispatched directly to their active C-Sync PWA Companion Dashboard alert message.`);
-        playHaptic('warning');
-        playVoice(`No Telegram account detected. Transmitting secure login OTP code directly to ${matchedStaff.fullName}'s companion app.`);
-        setIsSending(false);
-      }, 700);
-      return;
-    }
 
     try {
-      const response = await fetch('/api/telegram-send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chatId: chatId.trim(),
-          otp: otpCode,
-          phoneNumber: phoneNumber.trim()
-        })
-      });
-
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setDispatchedOtp(otpCode);
-        if (data.simulated) {
-          setMessage(`📡 [SANDBOX SIMULATION] Your secure login OTP code is: ${otpCode} (Bypassed real Telegram route because bot credentials are empty).`);
-        } else {
-          setMessage(`SUCCESS: Secure MFA passcode dispatched to ${matchedStaff.fullName} via Telegram Sentry.`);
-        }
-        playHaptic('success');
-        playVoice(`Verification passcode transmitted to ${matchedStaff.fullName}.`);
-      } else {
-        throw new Error(data.error || 'Webhook transmission timeout.');
-      }
-    } catch (err: any) {
-      console.warn('Telegram dispatch failed, generating simulated standard local OTP:', err);
-      // Generate fallback OTP for preview resilience
+      const activeChatId = localStorage.getItem('csync_telegram_chat_id') || chatId.trim();
+      await db.sendTelegramOtp(activeChatId, otpCode, phoneNumber.trim());
+      
       setDispatchedOtp(otpCode);
-      setMessage(`📡 [TEST HANDSHAKE CONNECTED] Your secure login OTP code is: ${otpCode} (Simulated Telegram Bot Sentry).`);
-      console.log(`🔒 [C-SYNC MFA Sentry Security Bypass] OTP Code for ${matchedStaff.fullName}: ${otpCode}`);
+      setMessage(`SUCCESS: Secure MFA passcode dispatched to ${matchedStaff.fullName} via Telegram Bot Sentry. Check your Telegram app (Chat ID: ${activeChatId})!`);
       playHaptic('success');
-      playVoice(`M F A passcode generated for ${matchedStaff.fullName}.`);
+      playVoice(`Verification passcode transmitted.`);
+      db.addLog('SECURITY', `MFA OTP dispatched via real Telegram Bot Sentry to Chat ID ${activeChatId} for ${matchedStaff.fullName}.`, 'success');
+    } catch (err: any) {
+      console.error('Telegram dispatch failed:', err);
+      setError(`Telegram Sentry Transmission Failure: ${err.message || err}. Live delivery failed (no simulation fallback permitted). Please verify your Google Apps Script URL and active Telegram Chat ID in the Dev Deck console.`);
+      playHaptic('error');
+      playVoice(`MFA dispatch failed.`);
     } finally {
       setIsSending(false);
     }

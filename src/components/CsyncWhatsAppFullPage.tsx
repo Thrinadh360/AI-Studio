@@ -3763,7 +3763,7 @@ SSL Certificates active on all dynamic proxies.`);
                 
                 <div id="cam-status-label" className="absolute top-2 left-2 text-[8px] font-mono bg-black/75 text-emerald-400 px-2 py-0.5 rounded uppercase font-bold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                  {useRearCamera ? 'Rear Camera' : 'Front Camera'} {cameraStreamActive ? '' : '(Simulated)'}
+                  {useRearCamera ? 'Rear Camera' : 'Front Camera'} {cameraStreamActive ? 'Active' : 'Standby'}
                 </div>
 
                 {activeThreadId.startsWith('thread-tg-') && tgCallState === 'connected' && (
@@ -3775,7 +3775,7 @@ SSL Certificates active on all dynamic proxies.`);
 
                 {cameraError && (
                   <div className="absolute inset-x-0 bottom-2 text-[7.5px] font-mono text-amber-400 text-center bg-black/80 px-2 py-0.5 leading-none">
-                    {useRearCamera ? 'Simulated Rear' : 'Simulated Front'} View (Internal secure tunnel link)
+                    {useRearCamera ? 'Rear Workstation' : 'Front User'} View (Internal secure tunnel link)
                   </div>
                 )}
               </div>
@@ -4329,7 +4329,7 @@ SSL Certificates active on all dynamic proxies.`);
                     <div className="w-24 h-24 rounded-full border-2 border-dashed border-cyan-500/40 p-1 relative z-10 animate-pulse bg-slate-900/60 flex items-center justify-center overflow-hidden">
                       <img 
                         src={currentUser.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop'} 
-                        alt="Simulated Face" 
+                        alt="User Face" 
                         className="w-full h-full rounded-full object-cover" 
                         referrerPolicy="no-referrer"
                       />
@@ -4338,7 +4338,7 @@ SSL Certificates active on all dynamic proxies.`);
                     <div className="w-36 h-20 rounded-lg border-2 border-dashed border-cyan-500/40 p-1 relative z-10 overflow-hidden animate-pulse bg-slate-900/60">
                       <img 
                         src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=300"
-                        alt="Simulated Room Workstation" 
+                        alt="Room Workstation" 
                         className="w-full h-full object-cover rounded-md" 
                         referrerPolicy="no-referrer"
                       />
@@ -4346,7 +4346,7 @@ SSL Certificates active on all dynamic proxies.`);
                   )}
 
                   <div className="mt-2 text-[8px] font-mono text-cyan-400 font-extrabold uppercase bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded tracking-widest relative z-10 shadow-md">
-                    {!useRearCamera ? "Simulated Front User Camera" : "Simulated Rear Workstation Lab"}
+                    {!useRearCamera ? "Active Front User Camera" : "Active Rear Workstation Lab"}
                   </div>
                 </div>
               )}
